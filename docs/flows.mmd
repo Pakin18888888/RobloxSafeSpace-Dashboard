@@ -1,0 +1,60 @@
+%% Draft 2026-11-16. Solid = proposed route ordering; evidence labels qualify observed UI.
+flowchart TD
+    Start([เปิด Web Dashboard]) --> Session{session ใช้ได้หรือไม่? · เสนอ}
+    Session -->|ยังไม่มี / หมดอายุ| Login[Login · แบบเสนอ ไม่เห็นหน้าจอในคลิป]
+    Login --> Submit[POST /dashboard/auth/login · เห็นชื่อ API 00:48]
+    Submit --> Auth{Backend ยืนยัน? · รอ contract}
+    Auth -->|ไม่ผ่าน| Error[ข้อความทั่วไป / แก้ไข / ลองใหม่]
+    Error --> Login
+    Auth -->|ผ่าน| Me[GET /dashboard/auth/me · เห็นชื่อ API 00:48]
+    Session -->|มี| Me
+    Me --> Temp{temporary password? · เสนอให้บังคับเปลี่ยน}
+    Temp -->|ใช่| Change[เปลี่ยนรหัสผ่าน · POST /dashboard/auth/change-password]
+    Change -->|Server ยืนยัน| Permission
+    Temp -->|ไม่ใช่| Permission{มีสิทธิ์หน้าใด?}
+    Permission -->|ไม่มี| Denied[หน้าสิทธิ์ไม่เพียงพอ / ออกจากระบบ]
+    Permission -->|มี Overview| Overview[Overview · 00:03–00:09]
+    Permission -->|มีสิทธิ์อื่น| Allowed[หน้าแรกที่มีสิทธิ์ · เสนอ]
+    Overview --> Menu[เมนูตามสิทธิ์ · Server ต้องตรวจทุก request]
+    Allowed --> Menu
+    Menu --> Alerts[Alerts · 00:12]
+    Menu --> Journeys[Journeys · 00:15–00:18]
+    Menu --> Codes[Codes · 00:21]
+    Menu --> Players[Players · 00:24–00:30]
+    Menu --> Config[Config · 00:33]
+    Menu --> Users[Users · 00:36–00:42]
+    Menu --> Logs[Logs · 00:45–00:48]
+    Alerts --> ARead[เลือก alert ตามรหัสนามแฝง]
+    ARead --> AAction{เลือกการกระทำที่มีสิทธิ์}
+    AAction -->|บันทึกทีม| Note[PATCH /dashboard/alerts/:id/note]
+    AAction -->|ตอบเข้าเกม| Reply[ตรวจผู้รับ / ยืนยันข้อความ · endpoint ยังไม่ยืนยัน]
+    AAction -->|รับทราบ| Ack[PATCH /dashboard/alerts/:id/ack · ความหมายต้องยืนยัน]
+    AAction -->|ลบ| AConfirm[ยืนยันก่อนลบ · เสนอ]
+    AConfirm -->|ยืนยัน| ADelete[DELETE /dashboard/alerts/:id]
+    AConfirm -->|ยกเลิก| ARead
+    Reply --> Delivery[แสดงผลตาม acknowledgement เท่านั้น · ไม่รับรองว่าอ่านแล้ว]
+    Note --> ARefresh[Server ยืนยัน → โหลดรายการใหม่]
+    Ack --> ARefresh
+    ADelete --> ARefresh
+    Journeys --> JAction{เลือกงาน}
+    JAction -->|สร้าง / แก้ไข| JForm[ชื่อ / ข้อความ / NPC steps / dialog / quiz / labels / CSV]
+    JForm --> JValidate{ข้อมูลถูกต้อง? · เสนอ}
+    JValidate -->|ไม่| JForm
+    JValidate -->|ใช่| JSave[บันทึกผ่าน API · schema ยังไม่ยืนยัน]
+    JAction -->|Progress| Progress[ความคืบหน้า / CSV ตามสิทธิ์ · ยังไม่เห็น export สำเร็จ]
+    JAction -->|ลบ| JDelete[ยืนยันผลกระทบ → API → โหลดใหม่ · เสนอ]
+    Codes --> CodeForm[เลือก Journey / custom code / expiry / max uses]
+    CodeForm --> CodeSave[POST /dashboard/codes → โหลดรายการ]
+    Codes --> CodeManage[Edit / Regenerate / Disable / Expire / Delete]
+    CodeManage --> CodeConfirm[ตรวจสิทธิ์ / ยืนยันผลกระทบ → API → โหลดใหม่]
+    Players --> Search[ค้นหารหัสที่อนุญาต → Open]
+    Search --> Detail[Progress / Quiz attempts / Alerts / Events ตามสิทธิ์]
+    Detail --> PlayerEdit[Set step / Mark done / Reset / Delete attempt]
+    PlayerEdit --> PConfirm[ยืนยันผู้เล่นและผลกระทบ → API → โหลดใหม่ · เสนอ]
+    Config --> JSON[แก้ key/value → validate JSON → ยืนยัน → Save · เสนอ]
+    Users --> UserAction[สร้างผู้ใช้ / role / reset password / disable / delete]
+    UserAction --> UserConfirm[ตรวจสิทธิ์ → ยืนยัน → API → โหลดใหม่ · เสนอ]
+    Logs --> Inspect[ตรวจ request / status / audit / health / endpoint catalog]
+    Menu --> Signout[Sign out · เห็นปุ่ม แต่ revoke/logout contract ยังไม่ยืนยัน]
+    Signout --> Login
+

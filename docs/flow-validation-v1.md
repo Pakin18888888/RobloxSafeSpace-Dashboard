@@ -1,0 +1,26 @@
+# ผลตรวจต้นแบบ
+
+วันที่: 16 พฤศจิกายน 2026
+
+ตรวจไฟล์ `index.html` ผ่าน Microsoft Edge แบบ headless โดยเปิดไฟล์ในเครื่องโดยตรง และตรวจภาพที่ได้จาก desktop, mobile, User flow, Workflow, Login และ print CSS
+
+| รายการ | ผล |
+|---|---|
+| JavaScript syntax | ผ่าน `node --check` |
+| เมนูหลัก 6 ส่วน | เปิดส่วนที่เลือกได้ |
+| User flow 8 ชุด / ปุ่มรายละเอียดทุกขั้น | เปลี่ยนเนื้อหาและสถานะปุ่มได้ |
+| Workflow 3 ชุด | แสดงลำดับ 6 ขั้นและผู้รับผิดชอบครบ |
+| Screen inventory 8 เมนู | แสดงชื่อและ wireframe ตรงกับตัวเลือก |
+| Login: สำเร็จ / temporary password / invalid / network / forbidden / expired | ผ่านทั้ง 6 สถานการณ์จำลอง |
+| ช่องว่าง / แสดง-ซ่อนรหัสผ่าน / รหัสยืนยันไม่ตรง | แสดง validation และสถานะถูกต้อง |
+| Reset ระหว่างกำลังจำลองคำขอ | ยกเลิกผลลัพธ์เก่า ไม่ข้ามไปหน้า Dashboard |
+| ออกจากระบบ / session หมดอายุ | กลับ Login และนำข้อมูล Dashboard ออกจาก DOM |
+| Checklist | นับข้อที่เลือกได้ ไม่เก็บข้ามการโหลดหน้า |
+| Viewport 1440 / 768 / 390 / 320 px | ไม่พบ page-level horizontal overflow ใน 6 ส่วนหลัก |
+| Print CSS | มี User flow ครบ 8 ชุด และ Workflow ครบ 3 ชุด ไม่ขึ้นอยู่กับชุดที่เลือกบนหน้าจอ |
+| Runtime JavaScript errors | 0 |
+| HTTP(S) requests จากหน้า HTML | 0 |
+
+ตาราง Workflow และ API ใช้การเลื่อนแนวนอนภายในตารางเมื่อหน้าจอแคบ เพื่อคงความอ่านง่าย ไม่บีบคอลัมน์จนอ่านไม่ได้
+
+ข้อจำกัด: ไม่ได้ทดสอบ API จริง, authentication จริง, authorization ฝั่ง Server, การส่งข้อความถึงเกม, การเปลี่ยน/ลบข้อมูลจริง หรือผลการพิมพ์จากเครื่องพิมพ์ ไม่ได้รับรอง accessibility audit เต็มรูปแบบ การตรวจ print เป็นการตรวจ CSS และเนื้อหาในโหมด print ไม่ใช่เอกสาร PDF ที่ส่งออกแล้ว
