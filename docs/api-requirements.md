@@ -13,14 +13,14 @@
 
 ## P0 ก่อนเชื่อมจริง
 
-| เรื่อง | ต้องได้จาก Backend |
-|---|---|
-| Auth | request/response ของ login/me, identifier fields, default/temporary flag, password policy, rate limits, disabled-account behavior |
-| Session | header/cookie mechanism, expiry, revoke/logout, refresh policy, CSRF/CORS, approved client token handling |
-| Permissions | server permission keys, role responses, protected read/write/export routes; Alerts visibility ข้าม Overview/Players/Logs/CSV |
-| Error contract | actual status codes / safe messages / field errors / request ID; distinguish 401/403/validation/conflict/network |
-| Pagination/search | cursor/page rules, query filters, supported sort fields, timezone/date boundaries, stale response handling |
-| Sensitive data | pseudonym fields, note visibility, retention, minimum-data response projection; token/body redaction at Server |
+| เรื่อง              | ต้องได้จาก Backend                                                                                                                  |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| Auth              | request/response ของ login/me, identifier fields, default/temporary flag, password policy, rate limits, disabled-account behavior |
+| Session           | header/cookie mechanism, expiry, revoke/logout, refresh policy, CSRF/CORS, approved client token handling                         |
+| Permissions       | server permission keys, role responses, protected read/write/export routes; Alerts visibility ข้าม Overview/Players/Logs/CSV       |
+| Error contract    | actual status codes / safe messages / field errors / request ID; distinguish 401/403/validation/conflict/network                  |
+| Pagination/search | cursor/page rules, query filters, supported sort fields, timezone/date boundaries, stale response handling                        |
+| Sensitive data    | pseudonym fields, note visibility, retention, minimum-data response projection; token/body redaction at Server                    |
 
 ## ความสามารถรายเมนู
 

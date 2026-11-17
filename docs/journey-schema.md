@@ -1,0 +1,43 @@
+# Journey content builder v0.4
+
+โมเดลนี้เป็น **Frontend Mock view-model** ไม่ใช่ request schema ที่ยืนยันกับ Backend แล้ว
+
+```text
+Journey
+└─ steps[]                         เพิ่ม/ลบ/ขึ้น/ลง
+   ├─ name, npc, passMark
+   └─ blocks[]                     เรียงลำดับการ์ด Dialog/Quiz ร่วมกัน
+      ├─ Dialog: title, npcName
+      │  └─ lines[]                เพิ่ม/ลบ/ขึ้น/ลง
+      │     └─ text, speaker       speaker ว่าง = ใช้ชื่อ NPC ของการ์ด
+      └─ Quiz: title, description, mode, showCorrect
+         └─ questions[]            เพิ่ม/ลบ/ขึ้น/ลง
+            └─ title, choices[], answer
+```
+
+## การใช้งาน
+
+1. เปิด Journeys → Editor แล้วเลือก Step
+2. ใช้ **+ Dialog / + Quiz** ด้านล่างรายการการ์ดเพื่อเพิ่มเนื้อหา
+3. ภายใน Dialog ใช้ **Add line** เพิ่มบทพูด พร้อมชื่อผู้พูดเฉพาะบรรทัดได้
+4. ภายใน Quiz ใช้ **Add question**; แต่ละคำถามใช้ **Add choice** เพิ่มตัวเลือก
+5. Quiz แบบ Graded เลือก radio ของคำตอบที่ถูกต้องแยกแต่ละคำถาม
+6. ใช้ปุ่มขึ้น/ลงจัดลำดับการ์ด บทพูด คำถาม หรือ Step; ไม่ต้องใช้ drag-and-drop
+7. บันทึกร่างและยืนยันเพื่อเก็บในหน่วยความจำของหน้าเว็บ รีโหลดจะกลับ fixture
+
+## ข้อกำหนดจำลอง
+
+- สูงสุด 30 steps, 30 blocks ต่อ step, 50 lines ต่อ Dialog, 30 questions ต่อ Quiz และ 2–8 choices ต่อคำถาม ขีดจำกัดทั้งหมดรอยืนยัน Backend
+- ต้องมีอย่างน้อย 1 การ์ดใน step, 1 line ใน Dialog และ 1 question ใน Quiz ก่อนบันทึก
+- การลบการ์ดลบเนื้อหาข้างในด้วย จึงต้องยืนยัน การลบบทพูด/คำถามต้องยืนยันเช่นกัน
+- เมื่อลบ choice ก่อนคำตอบที่ถูกต้อง จะปรับ index ให้ติดตามคำตอบเดิม; ถ้าลบคำตอบที่ถูกต้องจะเป็น `-1` และต้องเลือกใหม่ก่อนบันทึก Graded
+- `passMark: null` หมายถึงไม่กำหนดจำนวนคำตอบถูก; ถ้าระบุต้องเป็นจำนวนเต็มตั้งแต่ 1 ถึงจำนวนคำถาม Graded รวมใน step ไม่รวม Survey
+- หากลบคำถามหรือเปลี่ยนเป็น Survey แล้วเกณฑ์ผ่านสูงเกินไป การบันทึกจะแสดง error ให้แก้เกณฑ์ ไม่ปรับเกณฑ์เงียบ ๆ
+- `showCorrect` ใช้เฉพาะ Graded; UI เก็บค่าของ Survey ไว้แต่ปิดการแก้ไข ตัวเล่นจริง/เงื่อนไขผ่าน/การแสดงเฉลยยังไม่ได้เชื่อม
+- Overview นับจำนวนการ์ด Quiz ไม่ใช่จำนวนคำถาม
+
+## ข้อมูลเดิมและการเชื่อมจริง
+
+`journey-model.js` clone ข้อมูลเดิมและแปลง `step.dialog` เป็น Dialog 1 การ์ด/1 line และ `step.quiz` เป็น Quiz 1 การ์ด/1 question โดยเก็บคำถาม ตัวเลือก คำตอบและ mode เดิมไว้ ไม่แก้ไฟล์ fixture ต้นฉบับ หลังแปลงใช้ `blocks` เป็นแหล่งข้อมูลหลักเพียงชุดเดียว ไม่เขียน field เก่าซ้ำให้เกิดข้อมูลขัดแย้ง
+
+MockService ใช้ validation ของโมเดลนี้และ version conflict check เดิม ไม่มีการเพิ่ม endpoint หรือแก้ Backend/Database การต่อจริงต้อง map block IDs, ordering, speaker inheritance, quiz types/weights, pass marks และ reveal policy ตาม contract ของทีมก่อน

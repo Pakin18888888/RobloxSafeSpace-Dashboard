@@ -1,80 +1,1062 @@
 /* Management views share the application state, UI primitives and service boundary. */
-window.SafeSpaceManagement = function(ctx) {
+window.SafeSpaceManagement = function (ctx) {
   'use strict';
-  const {state,api,can,writable,pageHead,search,filter,matches,draw,renderRoute,mutate,go,newId}=ctx;
-  const U=SafeSpaceUI,{escape:E,icon:I,btn:B,badge,status,date,table:T,input:field,textarea,select}=U;
-  const $=s=>document.querySelector(s);
-  const selected=(resource,id)=>state.data.rows.find(x=>(x.id||x.key)===id);
-  const formPayload=d=>Object.fromEntries(d.entries());
-  const empty=(title,text)=>U.empty(title,text);
-  const countFoot=n=>`<div class="card-foot">${n} รายการ · ข้อมูลสมมติ</div>`;
-  const careDrafts=new Map();
-  function alertsView(){
-    const rows=state.data.rows.filter(a=>matches(a.playerId,a.id)&&(state.filter==='all'||a.status===state.filter));
-    const a=rows.find(x=>x.id===state.selected)||rows[0];state.selected=a?.id||null;const draft=a?(careDrafts.get(a.id)||{note:a.note,reply:''}):null;
-    return pageHead('Alerts','พื้นที่รับเรื่องสำหรับเจ้าหน้าที่ที่ได้รับสิทธิ์',B('Refresh','refresh',{icon:'refresh'}),'CARE WORKSPACE')+`<div class="notice amber" style="margin-bottom:22px">${I('shield')}บันทึกทีมและข้อความถึงผู้เล่นเป็นคนละส่วน · รับทราบคำขอไม่ได้หมายความว่าปัญหาได้รับการแก้ไขแล้ว</div><div class="split-view"><section class="card"><div class="toolbar">${search('ค้นหารหัสผู้เล่น','ค้นหารหัสผู้เล่น…')}${filter([['all','ทุกสถานะ'],['open','ยังไม่รับทราบ'],['handled','รับทราบแล้ว']])}</div><div class="inbox-list">${rows.map(x=>`<button class="inbox-item" data-action="select-alert" data-id="${x.id}" aria-pressed="${x.id===a?.id}"><div class="row between"><strong class="mono">${E(x.playerId)}</strong>${status(x.status)}</div><p>${E(x.message)}</p><time>${date(x.at,true)}</time></button>`).join('')||empty('ไม่พบคำขอ','ลองเปลี่ยนรหัสหรือสถานะที่ค้นหา')}</div>${countFoot(rows.length)}</section><section class="card">${a?`<div class="card-head"><div><h2>${E(a.playerId)}</h2><p>คำขอ ${E(a.id)} · ${date(a.at,true)}</p></div>${status(a.status)}</div><div class="card-body"><div class="message-bubble">${E(a.message)}</div>${writable('alerts')?`<div class="row between"><span class="small muted">การจัดการคำขอ</span><div class="row">${a.status==='open'?B('รับทราบคำขอ','handle-alert',{id:a.id,kind:'small',icon:'check'}):''}${B('ลบ','delete-alert',{id:a.id,kind:'danger small',icon:'trash'})}</div></div>`:''}<div class="detail-section"><h3>${I('lock')} บันทึกภายในทีม</h3><p class="small muted">ไม่ส่งข้อความในช่องนี้ให้ผู้เล่น · สิทธิ์การเห็นโน้ตจริงยังรอยืนยัน</p><div class="note-box team">${textarea('Team note','teamNote',draft.note,'id="team-note" maxlength="2000" '+(writable('alerts')?'':'disabled'))}${writable('alerts')?`<div class="row">${B('บันทึกทีม','save-note',{id:a.id,kind:'small',icon:'edit'})}</div>`:''}</div></div><div class="detail-section"><h3>${I('chat')} ตอบกลับผู้เล่น</h3><p class="small muted">การส่งเข้าเกมจริงยังรอ Backend contract</p>${writable('alerts')?`<div class="note-box">${textarea('ข้อความถึงผู้เล่น','reply',draft.reply,'id="reply-message" maxlength="1000" placeholder="กรอกข้อความตัวอย่าง…"')}<div class="row between"><span class="small muted">ผู้รับ: ${E(a.playerId)}</span>${B('ตรวจข้อความก่อนส่ง','reply-alert',{id:a.id,kind:'primary small',icon:'arrow'})}</div></div>`:''}${a.replies.map(r=>`<div class="reply-history"><div class="row between">${badge('บันทึกจำลอง · ไม่ได้ส่งเข้าเกม','blue')}<span class="small muted">${date(r.at,true)}</span></div><p style="margin-top:10px">${E(r.message)}</p></div>`).join('')}</div></div>`:empty('เลือกคำขอเพื่อดูรายละเอียด','ไม่มีข้อมูลที่ตรงกับตัวกรอง')}</section></div>`;
+  const {
+    state,
+    api,
+    can,
+    writable,
+    pageHead,
+    search,
+    filter,
+    matches,
+    draw,
+    renderRoute,
+    mutate,
+    go,
+    newId,
+  } = ctx;
+  const U = SafeSpaceUI,
+    {
+      escape: E,
+      icon: I,
+      btn: B,
+      badge,
+      status,
+      date,
+      table: T,
+      input: field,
+      textarea,
+      select,
+    } = U;
+  const $ = (s) => document.querySelector(s);
+  const selected = (resource, id) => state.data.rows.find((x) => (x.id || x.key) === id);
+  const formPayload = (d) => Object.fromEntries(d.entries());
+  const empty = (title, text) => U.empty(title, text);
+  const countFoot = (n) => /* HTML */ `<div class="card-foot">${n} รายการ · ข้อมูลสมมติ</div>`;
+  const careDrafts = new Map();
+  function alertsView() {
+    const rows = state.data.rows.filter(
+      (a) => matches(a.playerId, a.id) && (state.filter === 'all' || a.status === state.filter),
+    );
+    const a = rows.find((x) => x.id === state.selected) || rows[0];
+    state.selected = a?.id || null;
+    const draft = a ? careDrafts.get(a.id) || { note: a.note, reply: '' } : null;
+    return (
+      pageHead(
+        'Alerts',
+        'พื้นที่รับเรื่องสำหรับเจ้าหน้าที่ที่ได้รับสิทธิ์',
+        B('Refresh', 'refresh', { icon: 'refresh' }),
+        'CARE WORKSPACE',
+      ) +
+      /* HTML */ `<div class="notice amber u-mb-22">
+          ${I('shield')}บันทึกทีมและข้อความถึงผู้เล่นเป็นคนละส่วน · รับทราบคำขอไม่ได้หมายความว่าปัญหาได้รับการแก้ไขแล้ว
+        </div>
+        <div class="split-view">
+          <section class="card">
+            <div class="toolbar">
+              ${search('ค้นหารหัสผู้เล่น', 'ค้นหารหัสผู้เล่น…')}${filter([
+                ['all', 'ทุกสถานะ'],
+                ['open', 'ยังไม่รับทราบ'],
+                ['handled', 'รับทราบแล้ว'],
+              ])}
+            </div>
+            <div class="inbox-list">
+              ${
+                rows
+                  .map(
+                    (x) =>
+                      /* HTML */ `<button
+                        class="inbox-item"
+                        data-action="select-alert"
+                        data-id="${x.id}"
+                        aria-pressed="${x.id === a?.id}"
+                      >
+                        <div class="row between">
+                          <strong class="mono">${E(x.playerId)}</strong>${status(x.status)}
+                        </div>
+                        <p>${E(x.message)}</p>
+                        <time>${date(x.at, true)}</time>
+                      </button>`,
+                  )
+                  .join('') || empty('ไม่พบคำขอ', 'ลองเปลี่ยนรหัสหรือสถานะที่ค้นหา')
+              }
+            </div>
+            ${countFoot(rows.length)}
+          </section>
+          <section class="card">
+            ${
+              a
+                ? /* HTML */ `<div class="card-head">
+                      <div>
+                        <h2>${E(a.playerId)}</h2>
+                        <p>คำขอ ${E(a.id)} · ${date(a.at, true)}</p>
+                      </div>
+                      ${status(a.status)}
+                    </div>
+                    <div class="card-body">
+                      <div class="message-bubble">${E(a.message)}</div>
+                      ${
+                        writable('alerts')
+                          ? /* HTML */ `<div class="row between">
+                              <span class="small muted">การจัดการคำขอ</span>
+                              <div class="row">
+                                ${a.status === 'open' ? B('รับทราบคำขอ', 'handle-alert', { id: a.id, kind: 'small', icon: 'check' }) : ''}${B('ลบ', 'delete-alert', { id: a.id, kind: 'danger small', icon: 'trash' })}
+                              </div>
+                            </div>`
+                          : ''
+                      }
+                      <div class="detail-section">
+                        <h3>${I('lock')} บันทึกภายในทีม</h3>
+                        <p class="small muted">ไม่ส่งข้อความในช่องนี้ให้ผู้เล่น · สิทธิ์การเห็นโน้ตจริงยังรอยืนยัน</p>
+                        <div class="note-box team">
+                          ${textarea('Team note', 'teamNote', draft.note, 'id="team-note" maxlength="2000" ' + (writable('alerts') ? '' : 'disabled'))}${writable('alerts') ? /* HTML */ `<div class="row">${B('บันทึกทีม', 'save-note', { id: a.id, kind: 'small', icon: 'edit' })}</div>` : ''}
+                        </div>
+                      </div>
+                      <div class="detail-section">
+                        <h3>${I('chat')} ตอบกลับผู้เล่น</h3>
+                        <p class="small muted">การส่งเข้าเกมจริงยังรอ Backend contract</p>
+                        ${
+                          writable('alerts')
+                            ? /* HTML */ `<div class="note-box">
+                                ${textarea('ข้อความถึงผู้เล่น', 'reply', draft.reply, 'id="reply-message" maxlength="1000" placeholder="กรอกข้อความตัวอย่าง…"')}
+                                <div class="row between">
+                                  <span class="small muted">ผู้รับ: ${E(a.playerId)}</span
+                                  >${B('ตรวจข้อความก่อนส่ง', 'reply-alert', { id: a.id, kind: 'primary small', icon: 'arrow' })}
+                                </div>
+                              </div>`
+                            : ''
+                        }${a.replies
+                          .map(
+                            (r) =>
+                              /* HTML */ `<div class="reply-history">
+                                <div class="row between">
+                                  ${badge('บันทึกจำลอง · ไม่ได้ส่งเข้าเกม', 'blue')}<span
+                                    class="small muted"
+                                    >${date(r.at, true)}</span
+                                  >
+                                </div>
+                                <p class="u-mt-10">${E(r.message)}</p>
+                              </div>`,
+                          )
+                          .join('')}
+                      </div>
+                    </div>`
+                : empty('เลือกคำขอเพื่อดูรายละเอียด', 'ไม่มีข้อมูลที่ตรงกับตัวกรอง')
+            }
+          </section>
+        </div>`
+    );
   }
-  function journeysView(){if(state.editor)return editorView();const rows=state.data.rows.filter(j=>matches(j.title,j.description)&&(state.filter==='all'||j.status===state.filter));return pageHead('Journeys','ออกแบบเส้นทางกิจกรรม บทสนทนา และแบบทดสอบ',writable('journeys')?B('New journey','new-journey',{kind:'primary',icon:'plus'}):'','CONTENT STUDIO')+`<div class="notice" style="margin-bottom:20px">${I('info')}Draft → In review เป็นขั้นตอนเสนอสำหรับตรวจเนื้อหา · ไม่มี Publish หรือการอนุมัติจริงในต้นแบบนี้</div><div class="row between" style="margin-bottom:20px">${search('ค้นหา Journey','ค้นหา Journey…')}${filter([['all','ทุกสถานะ'],['draft','Draft'],['review','In review']])}</div>${rows.length?`<div class="journey-cards">${rows.map((j,i)=>`<article class="card journey-card"><div class="journey-art"><span class="tag">JOURNEY / ${String(i+1).padStart(2,'0')}</span>${I('route')}</div><div class="journey-info"><div class="row between" style="margin-bottom:12px">${status(j.status)}<span class="small muted">v${j.version}</span></div><h2>${E(j.title)}</h2><p>${E(j.description)}</p><div class="journey-meta"><span>${j.steps.length} steps</span><span>${j.steps.filter(s=>s.quiz).length} quizzes</span><span>${date(j.updated)}</span></div></div><div class="card-foot">${B(writable('journeys')?'เปิด Editor':'ดูรายละเอียด','edit-journey',{id:j.id,kind:'small',icon:'edit'})}<div class="row">${can('journeys.export')?B('Progress','journey-progress',{id:j.id,kind:'ghost small'}):''}${writable('journeys')?B('ลบ','delete-journey',{id:j.id,kind:'danger small'}):''}</div></div></article>`).join('')}</div>`:`<div class="card">${empty('ยังไม่พบ Journey','สร้าง Journey ใหม่ หรือเปลี่ยนคำค้นหา')}</div>`}`;}
-  function editorView(){const j=state.editor,s=j.steps[state.step],readOnly=!writable('journeys'),off=readOnly?'disabled':'';let pane='';
-    if(state.editorTab==='details')pane=`<div class="form-grid">${field('ชื่อ Journey','title',j.title,'text',`data-edit="title" maxlength="120" ${off}`)}${select('สถานะเนื้อหา (เสนอ)','status',[{value:'draft',label:'Draft · ร่าง'},{value:'review',label:'In review · รอตรวจ'}],j.status,`data-edit="status" ${off}`)}<div class="full-row">${textarea('คำอธิบาย','description',j.description,`data-edit="description" maxlength="1000" ${off}`)}</div><div class="full-row">${field('ข้อความเมื่อคุย NPC ผิดลำดับ','outOfOrder',j.outOfOrder,'text',`data-edit="outOfOrder" ${off}`)}</div>${field('ข้อความเมื่อกลับมาขั้นที่จบแล้ว','revisited',j.revisited,'text',`data-edit="revisited" ${off}`)}${field('ข้อความเมื่อจบ Journey','completed',j.completed,'text',`data-edit="completed" ${off}`)}</div><div class="detail-section"><h3>Value labels & export</h3><div class="form-grid" style="margin-top:15px">${textarea('Value labels (key:ชื่อ · หนึ่งรายการต่อบรรทัด)','labels',j.labels.map(l=>`${l.key}:${l.label}`).join('\n'),`data-edit="labels" ${off}`)}${field('CSV columns','csvColumns',j.csvColumns,'text',`data-edit="csvColumns" ${off}`)}</div><label class="check" style="margin-top:16px"><input type="checkbox" data-edit="showTotals" ${j.showTotals?'checked':''} ${off}><span>แสดงผลรวมให้ผู้เล่นเมื่อจบ · ความหมายคะแนนต้องให้ทีมเนื้อหายืนยัน</span></label><p class="small muted" style="margin-top:12px">คอลัมน์จำลอง: playerId, journeyId, progress, status, updated · schema จริงยังรอยืนยัน</p></div>`;
-    else if(s){const controls=`<div class="step-controls">${!readOnly?`${B('ขึ้น','move-step',{extra:'data-direction="-1"',kind:'small',disabled:state.step===0})}${B('ลง','move-step',{extra:'data-direction="1"',kind:'small',disabled:state.step===j.steps.length-1})}${B('ลบ step','remove-step',{kind:'danger small',disabled:j.steps.length===1})}`:''}</div>`;
-      if(state.editorTab==='dialog')pane=controls+`<div class="form-grid">${field('ชื่อขั้นตอน','stepName',s.name,'text',`data-step-edit="name" maxlength="120" ${off}`)}${field('NPC ID','npc',s.npc,'text',`data-step-edit="npc" maxlength="60" ${off}`)}<div class="full-row">${textarea('บทสนทนาของ NPC','dialog',s.dialog,`data-step-edit="dialog" rows="7" maxlength="3000" ${off}`)}</div></div><div class="notice" style="margin-top:20px">${I('chat')}โครงสร้างบทสนทนาจำลองสำหรับออกแบบ UI · การเชื่อม dialog/quiz จริงและรูปแบบหลายบรรทัดรอยืนยัน schema</div>`;
-      else pane=controls+`<label class="check" style="margin-bottom:20px"><input id="has-quiz" type="checkbox" ${s.quiz?'checked':''} ${off}><span>มีแบบทดสอบในขั้นตอนนี้</span></label>${s.quiz?`<div class="form-grid"><div class="full-row">${field('คำถาม','quizTitle',s.quiz.title,'text',`data-quiz-edit="title" maxlength="300" ${off}`)}</div>${select('รูปแบบ Quiz (schema จำลอง)','quizMode',[{value:'survey',label:'Survey · ไม่มีคำตอบถูก/ผิด'},{value:'graded',label:'Graded · มีคำตอบถูก'}],s.quiz.mode,`data-quiz-edit="mode" ${off}`)}${s.quiz.mode==='graded'?select('คำตอบที่ถูกต้อง','answer',s.quiz.choices.map((c,i)=>({value:i,label:`${i+1}. ${c}`})),s.quiz.answer,`data-quiz-edit="answer" ${off}`):''}<div class="full-row">${textarea('ตัวเลือก (2–8 รายการ · หนึ่งรายการต่อบรรทัด)','choices',s.quiz.choices.join('\n'),`data-quiz-edit="choices" rows="6" ${off}`)}</div></div><div class="notice amber" style="margin-top:20px">ผล Quiz เป็นข้อมูลกิจกรรม ไม่ใช้สรุปผลสุขภาพจิต · scored weights รอ schema Backend</div>`:empty('ขั้นนี้ไม่มี Quiz','ใช้เฉพาะบทสนทนา หรือเปิดสวิตช์เพื่อเพิ่ม Quiz')}`;
+  function journeysView() {
+    if (state.editor) return editorView();
+    const rows = state.data.rows.filter(
+      (j) =>
+        matches(j.title, j.description) && (state.filter === 'all' || j.status === state.filter),
+    );
+    return (
+      pageHead(
+        'Journeys',
+        'ออกแบบเส้นทางกิจกรรม บทสนทนา และแบบทดสอบ',
+        writable('journeys')
+          ? B('New journey', 'new-journey', { kind: 'primary', icon: 'plus' })
+          : '',
+        'CONTENT STUDIO',
+      ) +
+      /* HTML */ `<div class="notice u-mb-20">
+          ${I('info')}Draft → In review เป็นขั้นตอนเสนอสำหรับตรวจเนื้อหา · ไม่มี Publish
+          หรือการอนุมัติจริงในต้นแบบนี้
+        </div>
+        <div class="row between u-mb-20">
+          ${search('ค้นหา Journey', 'ค้นหา Journey…')}${filter([
+            ['all', 'ทุกสถานะ'],
+            ['draft', 'Draft'],
+            ['review', 'In review'],
+          ])}
+        </div>
+        ${
+          rows.length
+            ? /* HTML */ `<div class="journey-cards">
+                ${rows
+                  .map(
+                    (j, i) =>
+                      /* HTML */ `<article class="card journey-card">
+                        <div class="journey-art">
+                          <span class="tag">JOURNEY / ${String(i + 1).padStart(2, '0')}</span
+                          >${I('route')}
+                        </div>
+                        <div class="journey-info">
+                          <div class="row between u-mb-12">
+                            ${status(j.status)}<span class="small muted">v${j.version}</span>
+                          </div>
+                          <h2>${E(j.title)}</h2>
+                          <p>${E(j.description)}</p>
+                          <div class="journey-meta">
+                            <span>${j.steps.length} steps</span
+                            ><span>${SafeSpaceJourneyModel.quizCount(j)} quizzes</span
+                            ><span>${date(j.updated)}</span>
+                          </div>
+                        </div>
+                        <div class="card-foot">
+                          ${B(writable('journeys') ? 'เปิด Editor' : 'ดูรายละเอียด', 'edit-journey', { id: j.id, kind: 'small', icon: 'edit' })}
+                          <div class="row">
+                            ${can('journeys.export') ? B('Progress', 'journey-progress', { id: j.id, kind: 'ghost small' }) : ''}${writable('journeys') ? B('ลบ', 'delete-journey', { id: j.id, kind: 'danger small' }) : ''}
+                          </div>
+                        </div>
+                      </article>`,
+                  )
+                  .join('')}
+              </div>`
+            : /* HTML */ `<div class="card">
+                ${empty('ยังไม่พบ Journey', 'สร้าง Journey ใหม่ หรือเปลี่ยนคำค้นหา')}
+              </div>`
+        }`
+    );
+  }
+  const journeyEditor = SafeSpaceJourneyEditor(ctx);
+  const editorView = () => journeyEditor.render();
+  function bindEditor() {
+    if (state.page === 'alerts' && state.selected) {
+      const a = selected('alerts', state.selected);
+      const keep = () =>
+        careDrafts.set(a.id, {
+          note: $('#team-note')?.value || a.note,
+          reply: $('#reply-message')?.value || '',
+        });
+      if ($('#team-note')) $('#team-note').oninput = keep;
+      if ($('#reply-message')) $('#reply-message').oninput = keep;
     }
-    return pageHead(j.id?'Journey editor':'New journey',readOnly?'โหมดอ่านอย่างเดียว':`${state.dirty?'มีการแก้ไขที่ยังไม่บันทึก':'กำลังดูข้อมูลที่บันทึกแล้ว'} · ร่างจำลอง`,`${B('กลับรายการ','exit-editor',{icon:'back'})}${!readOnly?B('บันทึกร่าง','save-journey',{kind:'primary',icon:'check'}):''}`,'CONTENT STUDIO / EDITOR')+`<div class="editor-layout"><aside class="card"><div class="card-head"><h2>Journey steps</h2>${badge(`${j.steps.length} ขั้น`,'blue')}</div><div class="step-list">${j.steps.map((step,i)=>`<button class="step-item" data-action="select-step" data-index="${i}" aria-pressed="${i===state.step}"><span class="step-number">${i+1}</span><span>${E(step.name||'ขั้นตอนใหม่')}</span></button>`).join('')}</div>${!readOnly?`<div class="card-body" style="padding-top:16px">${B('เพิ่ม step','add-step',{icon:'plus',kind:'full'})}</div>`:''}</aside><section class="card"><div class="editor-tabs" aria-label="ส่วนของ Editor">${[['details','รายละเอียด'],['dialog','Dialog'],['quiz','Quiz']].map(([id,t])=>`<button data-action="editor-tab" data-tab="${id}" aria-pressed="${state.editorTab===id}">${t}</button>`).join('')}</div><div class="editor-pane">${pane}</div></section></div>`;
+    journeyEditor.bind();
   }
-  function bindEditor(){
-    if(state.page==='alerts'&&state.selected){const a=selected('alerts',state.selected);const keep=()=>careDrafts.set(a.id,{note:$('#team-note')?.value||a.note,reply:$('#reply-message')?.value||''});if($('#team-note'))$('#team-note').oninput=keep;if($('#reply-message'))$('#reply-message').oninput=keep;}
-    if(!state.editor)return;const j=state.editor;
-    const dirty=()=>{state.dirty=true;const note=$('.page-head p');if(note)note.textContent='มีการแก้ไขที่ยังไม่บันทึก · ร่างจำลอง'};
-    document.querySelectorAll('[data-edit]').forEach(el=>el.oninput=()=>{const k=el.dataset.edit;j[k]=k==='showTotals'?el.checked:k==='labels'?el.value.split('\n').filter(Boolean).map(v=>{const n=v.indexOf(':');return {key:n>=0?v.slice(0,n).trim():v.trim(),label:n>=0?v.slice(n+1).trim():v.trim()}}):el.value;dirty()});
-    document.querySelectorAll('[data-step-edit]').forEach(el=>el.oninput=()=>{j.steps[state.step][el.dataset.stepEdit]=el.value;dirty()});
-    document.querySelectorAll('[data-quiz-edit]').forEach(el=>{const k=el.dataset.quizEdit;el.oninput=()=>{j.steps[state.step].quiz[k]=k==='choices'?el.value.split('\n').map(v=>v.trim()).filter(Boolean):k==='answer'?Number(el.value):el.value;dirty()};if(k==='mode')el.onchange=()=>{el.oninput();draw()};if(k==='choices')el.onchange=()=>{el.oninput();draw()}});
-    if($('#has-quiz'))$('#has-quiz').onchange=e=>{j.steps[state.step].quiz=e.target.checked?{title:'',mode:'survey',choices:['ตัวเลือก 1','ตัวเลือก 2'],answer:0}:null;dirty();draw()};
+  function codesView() {
+    const rows = state.data.rows.filter(
+      (c) =>
+        matches(c.code, state.data.journeys.find((j) => j.id === c.journeyId)?.title) &&
+        (state.filter === 'all' || c.status === state.filter),
+    );
+    return (
+      pageHead(
+        'Join codes',
+        'สร้างและจัดการรหัสเข้าร่วมกิจกรรม',
+        writable('codes') ? B('Create code', 'create-code', { kind: 'primary', icon: 'plus' }) : '',
+        'ACTIVITY ACCESS',
+      ) +
+      /* HTML */ `<section class="card">
+        <div class="toolbar">
+          ${search('ค้นหารหัส', 'ค้นหา Code หรือ Journey…')}${filter([
+            ['all', 'ทุกสถานะ'],
+            ['live', 'Active'],
+            ['disabled', 'Disabled'],
+            ['expired', 'Expired'],
+          ])}
+        </div>
+        ${
+          rows.length
+            ? T(
+                ['JOIN CODE', 'JOURNEY', 'STATUS', 'USES', 'EXPIRES', ''],
+                rows.map((c) => [
+                  /* HTML */ `<span class="mono cell-primary">${E(c.code)}</span>`,
+                  E(state.data.journeys.find((j) => j.id === c.journeyId)?.title || '—'),
+                  status(c.status),
+                  `${c.uses} <span class="muted">/ ${c.maxUses ?? 'ไม่จำกัด'}</span>`,
+                  c.expires ? date(c.expires, true) : '<span class="muted">ไม่หมดอายุ</span>',
+                  writable('codes')
+                    ? /* HTML */ `<div class="table-actions">
+                        ${B('Edit', 'edit-code', { id: c.id, kind: 'small', icon: 'edit' })}${B('จัดการ', 'manage-code', { id: c.id, kind: 'small', icon: 'down' })}
+                      </div>`
+                    : 'อ่านอย่างเดียว',
+                ]),
+              )
+            : empty('ไม่พบ Join code', 'เปลี่ยนตัวกรอง หรือสร้างรหัสใหม่')
+        }${countFoot(rows.length)}
+      </section>`
+    );
   }
-  function codesView(){const rows=state.data.rows.filter(c=>matches(c.code,state.data.journeys.find(j=>j.id===c.journeyId)?.title)&&(state.filter==='all'||c.status===state.filter));return pageHead('Join codes','สร้างและจัดการรหัสเข้าร่วมกิจกรรม',writable('codes')?B('Create code','create-code',{kind:'primary',icon:'plus'}):'','ACTIVITY ACCESS')+`<section class="card"><div class="toolbar">${search('ค้นหารหัส','ค้นหา Code หรือ Journey…')}${filter([['all','ทุกสถานะ'],['live','Active'],['disabled','Disabled'],['expired','Expired']])}</div>${rows.length?T(['JOIN CODE','JOURNEY','STATUS','USES','EXPIRES',''],rows.map(c=>[`<span class="mono cell-primary">${E(c.code)}</span>`,E(state.data.journeys.find(j=>j.id===c.journeyId)?.title||'—'),status(c.status),`${c.uses} <span class="muted">/ ${c.maxUses??'ไม่จำกัด'}</span>`,c.expires?date(c.expires,true):'<span class="muted">ไม่หมดอายุ</span>',writable('codes')?`<div class="table-actions">${B('Edit','edit-code',{id:c.id,kind:'small',icon:'edit'})}${B('จัดการ','manage-code',{id:c.id,kind:'small',icon:'down'})}</div>`:'อ่านอย่างเดียว'])):empty('ไม่พบ Join code','เปลี่ยนตัวกรอง หรือสร้างรหัสใหม่')}${countFoot(rows.length)}</section>`;}
-  function playersView(){const d=state.data,p=d.rows.find(p=>p.id===state.selected);if(p){const rows=d.submissions.filter(q=>q.playerId===p.id);return pageHead('Player detail','ข้อมูลตามรหัสนามแฝง · เฉพาะขอบเขตที่บัญชีนี้มีสิทธิ์',B('กลับรายการ','players-back',{icon:'back'}),'PLAYER WORKSPACE')+`<div class="card profile-strip"><span class="avatar">P</span><div><h2 class="mono">${E(p.id)}</h2><span class="small muted">Pseudonymous player · ข้อมูลสมมติ</span></div><div class="profile-stats"><div><span>FIRST SEEN</span><strong>${date(p.firstSeen,true)}</strong></div><div><span>LAST SEEN</span><strong>${date(p.lastSeen,true)}</strong></div></div>${writable('players')?B('ลบข้อมูลผู้เล่น','delete-player',{id:p.id,kind:'danger small',icon:'trash'}):''}</div><div class="grid-2"><section class="card"><div class="card-head"><h2>Journey progress</h2>${I('route')}</div><div class="card-body">${p.progress.map(g=>{const j=d.journeys.find(j=>j.id===g.journeyId);return `<div class="progress-card"><div class="row between"><h3>${E(j?.title||g.journeyId)}</h3>${status(g.done?'complete':'in_progress')}</div><p class="small muted">${g.step} / ${j?.steps.length||0} steps · ${date(g.updated,true)}</p><div class="progress-track" style="margin-top:12px"><span style="width:${j?.steps.length?Math.min(100,g.step/j.steps.length*100):0}%"></span></div>${writable('players')?`<div class="row">${B('Set step','player-step',{id:p.id,kind:'small',extra:`data-journey="${g.journeyId}"`})}${B('Mark done','player-done',{id:p.id,kind:'small',extra:`data-journey="${g.journeyId}"`})}${B('Reset','player-reset',{id:p.id,kind:'danger small',extra:`data-journey="${g.journeyId}"`})}</div>`:''}</div>`}).join('')||empty('ยังไม่มีความคืบหน้า','ผู้เล่นยังไม่เริ่มกิจกรรม')}</div></section><section class="card"><div class="card-head"><h2>Recent events</h2>${I('activity')}</div><ul class="activity">${d.events.filter(e=>e.playerId===p.id).map(e=>`<li><span class="activity-marker">${I('activity')}</span><div><strong>${E(e.action)}</strong><time>${date(e.at,true)}</time></div></li>`).join('')||'<li class="muted small">ยังไม่มี event ของผู้เล่นนี้</li>'}</ul>${can('alerts.read')?`<div class="card-body"><div class="detail-section"><h3>คำขอช่วยเหลือ · จำกัดสิทธิ์</h3><p class="small muted" style="margin:10px 0">${d.alerts.filter(a=>a.playerId===p.id).length} คำขอ · เปิดรายละเอียดในพื้นที่รับเรื่อง</p>${B('ไปหน้า Alerts','navigate',{kind:'small',extra:'data-target="alerts"',icon:'arrow'})}</div></div>`:''}</section></div><section class="card" style="margin-top:22px"><div class="card-head"><h2>Quiz history</h2>${badge(`${rows.length} attempts`,'blue')}</div>${rows.length?T(['QUIZ','RESULT','SUBMITTED',''],rows.map(q=>[E(q.quiz),badge(q.result,'blue'),date(q.at,true),writable('players')?B('ลบ attempt','delete-attempt',{id:p.id,kind:'danger small',extra:`data-attempt="${q.id}"`}):'—'])):empty('ยังไม่มี Quiz attempts','ไม่พบรายการของผู้เล่นนี้')}</section>`;}
-    const rows=d.rows.filter(p=>matches(p.id));return pageHead('Players','ค้นหาผู้เล่นและติดตามความคืบหน้าโดยใช้รหัสนามแฝง',B('Refresh','refresh',{icon:'refresh'}),'PLAYER WORKSPACE')+`<section class="card"><div class="toolbar">${search('ค้นหารหัสผู้เล่น','ค้นหา p_demo_…')}<span class="small muted">${rows.length} ผู้เล่น</span></div>${rows.length?T(['PLAYER','FIRST SEEN','LAST SEEN','JOURNEYS',''],rows.map(p=>[`<div class="row"><span class="avatar">P</span><span class="mono cell-primary">${E(p.id)}</span></div>`,date(p.firstSeen,true),date(p.lastSeen,true),`${p.progress.filter(g=>g.done).length} / ${p.progress.length} complete`,B('เปิดข้อมูล','open-player',{id:p.id,kind:'small',icon:'arrow'})])):empty('ไม่พบผู้เล่น','เปลี่ยนรหัสที่ค้นหา หรือรอข้อมูลเพิ่มเติม')}<div class="card-foot">แสดงข้อมูลที่จำเป็น · ไม่มีชื่อจริงหรือข้อมูลติดต่อของเยาวชน</div></section>`;
-  }
-  function configView(){const rows=state.data.rows.filter(c=>matches(c.key,c.description));return pageHead('Game configuration','แก้ไขค่าตามชนิดข้อมูลที่ระบบรองรับ',B('Refresh','refresh',{icon:'refresh'}),'ADMINISTRATION')+`<div class="notice amber" style="margin-bottom:22px">${I('info')}มีเพียง key ตัวอย่างที่เห็นในคลิป · allowlist ชนิดข้อมูล ช่วงค่า และผลต่อเกมจริงยังรอ Backend ยืนยัน</div><section class="card"><div class="toolbar">${search('ค้นหา Config key','ค้นหา key…')}</div>${rows.map(c=>`<div class="config-row"><div><strong class="mono">${E(c.key)}</strong><p class="small muted" style="margin-top:6px">${E(c.description)}</p><p class="small muted">อัปเดต ${date(c.updated,true)} · ${E(c.type)}</p></div><div class="row"><span class="config-value">${E(JSON.stringify(c.value))}</span>${writable('config')?`${B('Edit','edit-config',{id:c.key,kind:'small',icon:'edit'})}${B('ลบ','delete-config',{id:c.key,kind:'danger small'})}`:''}</div></div>`).join('')||empty('ไม่พบ Configuration','ลองเปลี่ยนคำค้นหา')}</section>`;}
-  function usersView(){const rows=state.data.rows.filter(u=>matches(u.username,state.data.roles.find(r=>r.id===u.role)?.name)&&(state.filter==='all'||(state.filter==='active'?u.active:!u.active)));return pageHead('Users & permissions','จัดการบัญชีเจ้าหน้าที่และสิทธิ์การทำงาน',writable('users')?B('Create user','create-user',{kind:'primary',icon:'plus'}):'','ADMINISTRATION')+`<section class="card"><div class="toolbar">${search('ค้นหาเจ้าหน้าที่','ค้นหาชื่อผู้ใช้หรือบทบาท…')}${filter([['all','ทุกบัญชี'],['active','Active'],['disabled','Disabled']])}</div>${rows.length?T(['STAFF','ROLE','STATUS','LAST SIGN IN',''],rows.map(u=>[`<div class="row"><span class="avatar">${E(u.username.slice(0,2).toUpperCase())}</span><div class="cell-primary">${E(u.username)}${u.id===state.user.id?'<div class="cell-sub">บัญชีที่กำลังใช้งาน</div>':''}</div></div>`,badge(state.data.roles.find(r=>r.id===u.role)?.name||u.role,'blue'),`<div class="row">${status(u.active?'live':'disabled')}${u.temporary?badge('Temporary password','amber'):''}</div>`,date(u.lastSignIn,true),writable('users')?`<div class="table-actions">${B('Edit','edit-user',{id:u.id,kind:'small'})}${B('จัดการ','manage-user',{id:u.id,kind:'small',icon:'down'})}</div>`:'—'])):empty('ไม่พบบัญชี','เปลี่ยนคำค้นหาหรือตัวกรอง')}</section><section class="card" style="margin-top:22px"><div class="card-head"><div><h2>Roles & permission matrix</h2><p>Admin พบในคลิป · บทบาทอื่นเป็นตัวอย่างที่เสนอ</p></div>${writable('users')?B('New role','create-role',{kind:'small',icon:'plus'}):''}</div><div class="table-scroll"><table class="data-table permission-matrix"><thead><tr><th>PERMISSION GROUP</th>${state.data.roles.filter(r=>r.id!=='none').map(r=>`<th>${E(r.name)}</th>`).join('')}</tr></thead><tbody>${Object.entries(SafeSpaceData.permissions).map(([group,keys])=>`<tr><td><strong>${E(group)}</strong><div class="cell-sub">${keys.map(E).join(' / ')}</div></td>${state.data.roles.filter(r=>r.id!=='none').map(r=>`<td>${r.permissions.includes(`${group}.write`)?'<span class="grant">อ่าน + จัดการ</span>':r.permissions.includes(`${group}.read`)?'อ่าน':'—'}${r.permissions.includes('journeys.export')&&group==='journeys'?'<br><span class="small">+ Export</span>':''}</td>`).join('')}</tr>`).join('')}</tbody></table></div><div class="card-foot">ชื่อสิทธิ์นี้เป็น internal UI keys · Backend ต้องตรวจและบังคับใช้สิทธิ์จริงทุก request</div></section>`;}
-  function logsView(){const rows=state.data.rows.filter(l=>matches(l.action,l.status)&&(state.filter==='all'||(state.filter==='errors'?l.status>=400:l.kind===state.filter)));return pageHead('System logs','ตรวจสถานะและประวัติการทำงานอย่างเป็นระบบ',B('Refresh','refresh',{icon:'refresh'}),'ADMINISTRATION')+`<div class="status-cards"><article class="card status-card"><span class="metric-icon">${I('activity')}</span><div><h3>Backend API ${badge('Mock','blue')}</h3><p>ตอบกลับจาก Mock adapter ในเบราว์เซอร์</p></div></article><article class="card status-card"><span class="metric-icon amber">${I('logs')}</span><div><h3>Database ${badge('Not connected','amber')}</h3><p>ไม่ได้ตรวจสถานะฐานข้อมูลจริง</p></div></article></div><section class="card"><div class="toolbar">${search('ค้นหา Logs','ค้นหา action หรือ status…')}${filter([['all','ทุกประเภท'],['request','Requests'],['event','Events'],['audit','Audit'],['errors','Errors only']])}<span class="small muted">${rows.length} รายการ</span></div>${rows.length?T(['TIMESTAMP','TYPE','ACTION / REQUEST','STATUS','DURATION'],rows.map(l=>[date(l.at,true),badge(l.kind,'blue'),`<span class="mono">${E(l.action)}</span>`,badge(String(l.status),l.status>=400?'red':'green'),`${l.duration} ms`])):empty('ไม่พบ Log','เปลี่ยนตัวกรองหรือรีเฟรชข้อมูล')}<div class="card-foot">เฉพาะ metadata ที่กำหนด · ไม่มี token, password, request body หรือข้อความขอความช่วยเหลือ</div></section>`;}
-  function codeForm(id){const c=id?selected('codes',id):null;U.modal({title:c?'แก้ไข Join code':'Create join code',body:`<div class="notice">การสร้างหรือแก้ไขนี้มีผลเฉพาะข้อมูลจำลอง</div>${select('Journey','journeyId',state.data.journeys.map(j=>({value:j.id,label:j.title})),c?.journeyId||state.data.journeys[0]?.id,'required')}${field('Custom code (เว้นว่างเพื่อสร้างอัตโนมัติ)','code',c?.code||'','text','maxlength="24" pattern="[A-Za-z0-9_-]{3,24}" placeholder="เช่น SPACE26"')}<div class="form-grid">${field('หมดอายุใน (นาที)','minutes','','number','min="1" max="525600" placeholder="เว้นว่าง = ไม่หมดอายุ"')}${field('จำนวนใช้สูงสุด','maxUses',c?.maxUses??'','number','min="1" placeholder="เว้นว่าง = ไม่จำกัด"')}</div>${c?`<label class="check"><input name="keepExpiry" type="checkbox" checked><span>คงวันหมดอายุเดิม: ${c.expires?date(c.expires,true):'ไม่หมดอายุ'} (ยกเลิกเพื่อใช้ค่าที่กรอก)</span></label>`:''}`,submit:'ยืนยันบันทึกรหัสจำลอง',onSubmit:async d=>{const minutes=d.get('minutes');await mutate('codes','save',id,{code:d.get('code'),journeyId:d.get('journeyId'),maxUses:d.get('maxUses')===''?null:Number(d.get('maxUses')),expires:c&&d.get('keepExpiry')?c.expires:minutes?new Date(Date.now()+Number(minutes)*60000).toISOString():null});await renderRoute()}})}
-  function userForm(id){const u=id?selected('users',id):null;U.modal({title:u?'แก้ไขบัญชีเจ้าหน้าที่':'Create staff account',body:`<div class="notice amber">บัญชีจำลอง ไม่สร้างผู้ใช้บน Backend และไม่เก็บรหัสผ่านที่กรอก</div>${field('Username','username',u?.username||'','text','required maxlength="60" pattern="[A-Za-z0-9._-]+" autocomplete="off"')}${select('Role','role',state.data.roles.filter(r=>r.id!=='none').map(r=>({value:r.id,label:r.name})),u?.role||'observer','required')}${!u?field('Temporary password (ใช้ค่าตัวอย่างเท่านั้น)','password','','password','required minlength="8" maxlength="128" autocomplete="new-password"'):''}`,submit:'ยืนยันบันทึกบัญชีจำลอง',onSubmit:async d=>{await mutate('users','save',id,formPayload(d));await renderRoute()}})}
-  async function progressModal(id){const journey=selected('journeys',id),rows=await api.journeyProgress(id);U.modal({title:`Progress · ${journey.title}`,wide:true,body:`<div class="notice">ข้อมูลจำลองตามสิทธิ์ export · ไม่มีข้อความขอความช่วยเหลือ</div>${T(['PLAYER','PROGRESS','STATUS','UPDATED'],rows.map(r=>[E(r.playerId),String(r.progress),status(r.status),date(r.updated,true)]))}${!rows.length?empty('ยังไม่มีผู้เล่น','ยังไม่มีความคืบหน้าใน Journey นี้'):''}`,submit:'ดาวน์โหลด CSV จำลอง',onSubmit:async()=>{const fresh=await api.journeyProgress(id);const cols=(journey.csvColumns||'playerId,journeyId,progress,status,updated').split(',').map(s=>s.trim());const allowed=['playerId','journeyId','progress','status','updated'];if(cols.some(c=>!allowed.includes(c)))throw new Error('คอลัมน์ CSV ไม่อยู่ในรายการที่รองรับ');const csv='\ufeff'+U.csv([cols,...fresh.map(r=>cols.map(c=>r[c]))]);const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download=`mock-journey-${id}.csv`;a.click();setTimeout(()=>URL.revokeObjectURL(url),500);U.toast('ดาวน์โหลด CSV ข้อมูลจำลองแล้ว')}})}
-  function newStep(){return {id:newId(),name:'ขั้นตอนใหม่',npc:'',dialog:'',quiz:null}}
-  async function managementAction(action,b){const id=b.dataset.id;
-    if(action==='select-alert'){state.selected=id;draw();return}
-    if(['save-note','reply-alert','handle-alert','delete-alert'].includes(action)){
-      const a=selected('alerts',id),isReply=action==='reply-alert',note=$('#team-note')?.value||'',reply=$('#reply-message')?.value||'';
-      if((isReply&&!reply.trim())||(action==='save-note'&&!note.trim()))return U.toast('กรุณากรอกข้อความก่อน');
-      const map={'save-note':['บันทึกโน้ตทีม?','note',{note}],'reply-alert':['ยืนยันข้อความถึงผู้เล่น?','reply',{message:reply}],'handle-alert':['รับทราบคำขอนี้?','handle',{}],'delete-alert':['ลบคำขอนี้?','delete',{}]};const [title,op,payload]=map[action];
-      return U.confirm(title,`คำขอ ${a.id} · ผู้เล่น ${a.playerId}\n${isReply?'จำลองการตอบกลับเท่านั้น ยังไม่มีการส่งถึงหรืออ่านในเกม':action==='save-note'?'บันทึกภายในทีม ไม่ส่งให้ผู้เล่น':action==='handle-alert'?'เปลี่ยนสถานะเป็นรับทราบ ไม่ยืนยันว่าปัญหาจบแล้ว':'รายการจะถูกนำออกจากชุดข้อมูลจำลอง'}`,async()=>{await mutate('alerts',op,id,payload);careDrafts.delete(id);await renderRoute()},{danger:op==='delete',label:isReply?'ยืนยันข้อความจำลอง':'ยืนยัน',body:isReply||op==='note'?`<div class="message-bubble">${E(isReply?reply:note)}</div>`:''});
+  function playersView() {
+    const d = state.data,
+      p = d.rows.find((p) => p.id === state.selected);
+    if (p) {
+      const rows = d.submissions.filter((q) => q.playerId === p.id);
+      return (
+        pageHead(
+          'Player detail',
+          'ข้อมูลตามรหัสนามแฝง · เฉพาะขอบเขตที่บัญชีนี้มีสิทธิ์',
+          B('กลับรายการ', 'players-back', { icon: 'back' }),
+          'PLAYER WORKSPACE',
+        ) +
+        /* HTML */ `<div class="card profile-strip">
+            <span class="avatar">P</span>
+            <div>
+              <h2 class="mono">${E(p.id)}</h2>
+              <span class="small muted">Pseudonymous player · ข้อมูลสมมติ</span>
+            </div>
+            <div class="profile-stats">
+              <div><span>FIRST SEEN</span><strong>${date(p.firstSeen, true)}</strong></div>
+              <div><span>LAST SEEN</span><strong>${date(p.lastSeen, true)}</strong></div>
+            </div>
+            ${writable('players') ? B('ลบข้อมูลผู้เล่น', 'delete-player', { id: p.id, kind: 'danger small', icon: 'trash' }) : ''}
+          </div>
+          <div class="grid-2">
+            <section class="card">
+              <div class="card-head">
+                <h2>Journey progress</h2>
+                ${I('route')}
+              </div>
+              <div class="card-body">
+                ${
+                  p.progress
+                    .map((g) => {
+                      const j = d.journeys.find((j) => j.id === g.journeyId);
+                      return /* HTML */ `<div class="progress-card">
+                        <div class="row between">
+                          <h3>${E(j?.title || g.journeyId)}</h3>
+                          ${status(g.done ? 'complete' : 'in_progress')}
+                        </div>
+                        <p class="small muted">
+                          ${g.step} / ${j?.steps.length || 0} steps · ${date(g.updated, true)}
+                        </p>
+                        <div class="progress-track u-mt-12">
+                          <span
+                            style="width:${j?.steps.length ? Math.min(100, (g.step / j.steps.length) * 100) : 0}%"
+                          ></span>
+                        </div>
+                        ${writable('players') ? /* HTML */ `<div class="row">${B('Set step', 'player-step', { id: p.id, kind: 'small', extra: `data-journey="${g.journeyId}"` })}${B('Mark done', 'player-done', { id: p.id, kind: 'small', extra: `data-journey="${g.journeyId}"` })}${B('Reset', 'player-reset', { id: p.id, kind: 'danger small', extra: `data-journey="${g.journeyId}"` })}</div>` : ''}
+                      </div>`;
+                    })
+                    .join('') || empty('ยังไม่มีความคืบหน้า', 'ผู้เล่นยังไม่เริ่มกิจกรรม')
+                }
+              </div>
+            </section>
+            <section class="card">
+              <div class="card-head">
+                <h2>Recent events</h2>
+                ${I('activity')}
+              </div>
+              <ul class="activity">
+                ${
+                  d.events
+                    .filter((e) => e.playerId === p.id)
+                    .map(
+                      (e) =>
+                        /* HTML */ `<li>
+                          <span class="activity-marker">${I('activity')}</span>
+                          <div><strong>${E(e.action)}</strong><time>${date(e.at, true)}</time></div>
+                        </li>`,
+                    )
+                    .join('') || '<li class="muted small">ยังไม่มี event ของผู้เล่นนี้</li>'
+                }
+              </ul>
+              ${
+                can('alerts.read')
+                  ? /* HTML */ `<div class="card-body">
+                      <div class="detail-section">
+                        <h3>คำขอช่วยเหลือ · จำกัดสิทธิ์</h3>
+                        <p class="small muted u-m-10-0">
+                          ${d.alerts.filter((a) => a.playerId === p.id).length} คำขอ ·
+                          เปิดรายละเอียดในพื้นที่รับเรื่อง
+                        </p>
+                        ${B('ไปหน้า Alerts', 'navigate', { kind: 'small', extra: 'data-target="alerts"', icon: 'arrow' })}
+                      </div>
+                    </div>`
+                  : ''
+              }
+            </section>
+          </div>
+          <section class="card u-mt-22">
+            <div class="card-head">
+              <h2>Quiz history</h2>
+              ${badge(`${rows.length} attempts`, 'blue')}
+            </div>
+            ${
+              rows.length
+                ? T(
+                    ['QUIZ', 'RESULT', 'SUBMITTED', ''],
+                    rows.map((q) => [
+                      E(q.quiz),
+                      badge(q.result, 'blue'),
+                      date(q.at, true),
+                      writable('players')
+                        ? B('ลบ attempt', 'delete-attempt', {
+                            id: p.id,
+                            kind: 'danger small',
+                            extra: `data-attempt="${q.id}"`,
+                          })
+                        : '—',
+                    ]),
+                  )
+                : empty('ยังไม่มี Quiz attempts', 'ไม่พบรายการของผู้เล่นนี้')
+            }
+          </section>`
+      );
     }
-    if(action==='new-journey'||action==='edit-journey'){state.editor=action==='edit-journey'?SafeSpaceData.clone(selected('journeys',id)):{id:null,title:'',description:'',status:'draft',version:0,outOfOrder:'',revisited:'',completed:'',showTotals:false,labels:[],csvColumns:'playerId,journeyId,progress,status,updated',steps:[newStep()]};state.editorTab='details';state.step=0;state.dirty=false;draw();return}
-    if(action==='editor-tab'){state.editorTab=b.dataset.tab;draw();return}
-    if(action==='select-step'){state.step=+b.dataset.index;state.editorTab='dialog';draw();return}
-    if(action==='add-step'){state.editor.steps.push(newStep());state.step=state.editor.steps.length-1;state.editorTab='dialog';state.dirty=true;draw();return}
-    if(action==='move-step'){const next=state.step+Number(b.dataset.direction),steps=state.editor.steps;if(next<0||next>=steps.length)return;[steps[state.step],steps[next]]=[steps[next],steps[state.step]];state.step=next;state.dirty=true;draw();return}
-    if(action==='remove-step'){if(state.editor.steps.length<2)return;return U.confirm('ลบขั้นตอนนี้?','ลบออกจากร่างปัจจุบัน ยังไม่เปลี่ยน Journey ที่บันทึกจนกดบันทึกร่าง',async()=>{state.editor.steps.splice(state.step,1);state.step=Math.min(state.step,state.editor.steps.length-1);state.dirty=true;draw()},{danger:true})}
-    if(action==='exit-editor'){const exit=()=>{state.editor=null;state.dirty=false;draw()};if(state.dirty)return U.confirm('ออกจาก Editor?','ข้อมูลที่ยังไม่บันทึกจะถูกยกเลิก',async()=>exit(),{label:'ออกจาก Editor'});exit();return}
-    if(action==='save-journey')return U.confirm('บันทึก Journey จำลอง?',`ชื่อ: ${state.editor.title||'(ยังไม่มีชื่อ)'}\n${state.editor.steps.length} steps · ${state.editor.status==='review'?'ส่งสถานะรอตรวจ (จำลอง)':'บันทึกร่าง'}\nไม่มีการเผยแพร่เข้าเกม`,async()=>{const saved=await mutate('journeys','save',state.editor.id,SafeSpaceData.clone(state.editor));state.editor=saved;state.dirty=false;await renderRoute()},{label:'ยืนยันบันทึกร่าง'});
-    if(action==='delete-journey')return U.confirm('ลบ Journey?','หากมี Code หรือความคืบหน้าเชื่อมอยู่ ต้นแบบจะปฏิเสธการลบเพื่อไม่ให้ข้อมูลอ้างอิงเสีย',async()=>{await mutate('journeys','delete',id);await renderRoute()},{danger:true});
-    if(action==='journey-progress')return progressModal(id);
-    if(action==='create-code'||action==='edit-code')return codeForm(id||null);
-    if(action==='manage-code'){const c=selected('codes',id);return U.modal({title:`จัดการ ${c.code}`,body:`<p class="small muted">เลือกการกระทำ แล้วตรวจผลกระทบก่อนยืนยัน</p><div class="stack">${B('Regenerate · เปลี่ยนรหัส','code-regenerate',{id,icon:'refresh'})}${B('Disable · ปิดการใช้','code-disable',{id,icon:'lock',disabled:c.status==='disabled'})}${B('Expire · ให้หมดอายุ','code-expire',{id,icon:'clock',disabled:c.status==='expired'})}${B('Delete · ลบรายการ','code-delete',{id,kind:'danger',icon:'trash'})}</div>`})}
-    if(action.startsWith('code-')){const op=action.slice(5),c=selected('codes',id);return U.confirm(`${op} รหัส ${c.code}?`,op==='regenerate'?'ต้นแบบจะสร้างรหัสใหม่และแทนที่รหัสเดิม ผลจริงต่อรหัสเก่ายังต้องยืนยัน Backend':op==='delete'?'นำรหัสนี้ออกจากชุดข้อมูลจำลอง':'เปลี่ยนสถานะรหัสในชุดข้อมูลจำลอง',async()=>{await mutate('codes',op,id);await renderRoute()},{danger:op==='delete'})}
-    if(action==='players-back'){state.selected=null;draw();return}
-    if(action.startsWith('player-')){const op=action.slice(7),journey=state.data.journeys.find(j=>j.id===b.dataset.journey),progress=selected('players',id).progress.find(g=>g.journeyId===journey.id);if(op==='step')return U.modal({title:'Set player step',body:`<p>${E(id)} · ${E(journey.title)}</p>${select('ขั้นตอนที่บันทึกแล้ว','step',[{value:0,label:'0 · ยังไม่เริ่ม'},...journey.steps.map((s,i)=>({value:i+1,label:`${i+1}. ${s.name}`}))],progress.step)}<p class="modal-help">เปลี่ยนความคืบหน้าจำลอง ไม่เปลี่ยนสถานะ Roblox จริง</p>`,submit:'ยืนยันเปลี่ยน Step',onSubmit:async d=>{await mutate('players','step',id,{journeyId:journey.id,step:Number(d.get('step'))});await renderRoute()}});return U.confirm(op==='reset'?'Reset ความคืบหน้า?':'ทำเครื่องหมายว่าจบ Journey?',`${id}\n${journey.title}\n${op==='reset'?'กลับไป 0 steps ในข้อมูลจำลอง':'เปลี่ยนเป็นขั้นสุดท้ายในข้อมูลจำลอง'}`,async()=>{await mutate('players',op,id,{journeyId:journey.id});await renderRoute()},{danger:op==='reset'})}
-    if(action==='delete-player')return U.confirm('ลบข้อมูลผู้เล่น?',`${id}\nลบ progress, quiz attempts และ activity จำลองของผู้เล่นนี้\nคำขอช่วยเหลือแยกวงจรการเก็บข้อมูล จึงไม่ลบตามอัตโนมัติ นโยบายจริงรอยืนยัน`,async()=>{await mutate('players','delete',id);state.selected=null;await renderRoute()},{danger:true});
-    if(action==='delete-attempt')return U.confirm('ลบ Quiz attempt?',`ผู้เล่น ${id} · รายการ ${b.dataset.attempt}\nลบเฉพาะรายการที่เลือกในข้อมูลจำลอง`,async()=>{await mutate('players','deleteAttempt',id,{attemptId:b.dataset.attempt});await renderRoute()},{danger:true});
-    if(action==='edit-config'){const c=selected('config',id);return U.modal({title:`แก้ไข ${c.key}`,body:`<p class="small muted">ชนิดข้อมูลจำลอง: ${E(c.type)} · ตรวจ key/type/range จริงที่ Backend ก่อนใช้งาน</p>${c.type==='number'?field('Value','value',c.value,'number','required min="0" step="any"'):textarea('Value (JSON)','value',JSON.stringify(c.value))}`,submit:'ยืนยันบันทึกค่า',onSubmit:async d=>{let value;try{value=JSON.parse(d.get('value'))}catch{throw new Error('รูปแบบ JSON ไม่ถูกต้อง')}await mutate('config','save',id,{value});await renderRoute()}})}
-    if(action==='delete-config')return U.confirm('ลบ Configuration?',`Key: ${id}\nนำออกจากชุดข้อมูลจำลอง ผลต่อเกมจริงต้องยืนยันก่อนใช้`,async()=>{await mutate('config','delete',id);await renderRoute()},{danger:true});
-    if(action==='create-user'||action==='edit-user')return userForm(id||null);
-    if(action==='manage-user'){const u=selected('users',id);return U.modal({title:`จัดการ ${u.username}`,body:`<div class="stack">${B('Reset password','user-reset',{id,icon:'lock'})}${B(u.active?'Disable account':'Enable account','user-disable',{id,disabled:u.id===state.user.id})}${B('Delete account','user-delete',{id,kind:'danger',disabled:u.id===state.user.id})}</div><p class="small muted">ต้นแบบไม่ให้ปิด/ลบบัญชีที่กำลังใช้งาน และไม่เก็บรหัสผ่านจำลอง</p>`})}
-    if(action==='user-reset')return U.modal({title:'Reset temporary password',body:field('รหัสผ่านชั่วคราวจำลอง','password','','password','required minlength="8" maxlength="128" autocomplete="new-password"')+'<p class="small muted">ไม่ส่งรหัสผ่านให้บุคคลใด และไม่เปลี่ยนบัญชีจริง</p>',submit:'ยืนยัน Reset จำลอง',onSubmit:async d=>{await mutate('users','reset',id,{password:d.get('password')});await renderRoute()}});
-    if(action==='user-disable'||action==='user-delete'){const op=action.slice(5),u=selected('users',id);return U.confirm(op==='delete'?'ลบบัญชีนี้?':u.active?'ปิดบัญชีนี้?':'เปิดบัญชีนี้?',`บัญชี ${u.username}\nเปลี่ยนสถานะในข้อมูลจำลองเท่านั้น`,async()=>{await mutate('users',op,id);await renderRoute()},{danger:op==='delete'})}
-    if(action==='create-role')return U.modal({title:'Create role · บทบาทจำลอง',wide:true,body:`${field('ชื่อบทบาท','name','','text','required maxlength="60"')}<div class="grid-2">${Object.entries(SafeSpaceData.permissions).map(([group,keys])=>`<div class="role-card"><h3>${E(group)}</h3>${keys.map(key=>`<label class="check"><input type="checkbox" name="permissions" value="${key}"><span>${key.endsWith('.read')?'อ่านข้อมูล':key.endsWith('.write')?'จัดการข้อมูล':'ดู progress / export'}</span></label>`).join('')}</div>`).join('')}</div><p class="small muted">สิทธิ์เขียนหรือ export ต้องเลือกสิทธิ์อ่านของกลุ่มนั้นด้วย</p>`,submit:'ยืนยันสร้าง Role',onSubmit:async d=>{const permissions=d.getAll('permissions');for(const p of permissions){const group=p.split('.')[0];if(!p.endsWith('.read')&&!permissions.includes(`${group}.read`))throw new Error(`กรุณาเลือกสิทธิ์อ่านของ ${group} ด้วย`)}await mutate('users','role',null,{name:d.get('name'),permissions});await renderRoute()}});
+    const rows = d.rows.filter((p) => matches(p.id));
+    return (
+      pageHead(
+        'Players',
+        'ค้นหาผู้เล่นและติดตามความคืบหน้าโดยใช้รหัสนามแฝง',
+        B('Refresh', 'refresh', { icon: 'refresh' }),
+        'PLAYER WORKSPACE',
+      ) +
+      /* HTML */ `<section class="card">
+        <div class="toolbar">
+          ${search('ค้นหารหัสผู้เล่น', 'ค้นหา p_demo_…')}<span class="small muted"
+            >${rows.length} ผู้เล่น</span
+          >
+        </div>
+        ${
+          rows.length
+            ? T(
+                ['PLAYER', 'FIRST SEEN', 'LAST SEEN', 'JOURNEYS', ''],
+                rows.map((p) => [
+                  /* HTML */ `<div class="row">
+                    <span class="avatar">P</span><span class="mono cell-primary">${E(p.id)}</span>
+                  </div>`,
+                  date(p.firstSeen, true),
+                  date(p.lastSeen, true),
+                  `${p.progress.filter((g) => g.done).length} / ${p.progress.length} complete`,
+                  B('เปิดข้อมูล', 'open-player', { id: p.id, kind: 'small', icon: 'arrow' }),
+                ]),
+              )
+            : empty('ไม่พบผู้เล่น', 'เปลี่ยนรหัสที่ค้นหา หรือรอข้อมูลเพิ่มเติม')
+        }
+        <div class="card-foot">แสดงข้อมูลที่จำเป็น · ไม่มีชื่อจริงหรือข้อมูลติดต่อของเยาวชน</div>
+      </section>`
+    );
   }
-  return {alertsView,journeysView,codesView,playersView,configView,usersView,logsView,bindEditor,managementAction,clearDrafts:()=>careDrafts.clear()};
+  function configView() {
+    const rows = state.data.rows.filter((c) => matches(c.key, c.description));
+    return (
+      pageHead(
+        'Game configuration',
+        'แก้ไขค่าตามชนิดข้อมูลที่ระบบรองรับ',
+        B('Refresh', 'refresh', { icon: 'refresh' }),
+        'ADMINISTRATION',
+      ) +
+      /* HTML */ `<div class="notice amber u-mb-22">
+          ${I('info')}มีเพียง key ตัวอย่างที่เห็นในคลิป · allowlist ชนิดข้อมูล ช่วงค่า และผลต่อเกมจริงยังรอ Backend
+          ยืนยัน
+        </div>
+        <section class="card">
+          <div class="toolbar">${search('ค้นหา Config key', 'ค้นหา key…')}</div>
+          ${
+            rows
+              .map(
+                (c) =>
+                  /* HTML */ `<div class="config-row">
+                    <div>
+                      <strong class="mono">${E(c.key)}</strong>
+                      <p class="small muted u-mt-6">${E(c.description)}</p>
+                      <p class="small muted">อัปเดต ${date(c.updated, true)} · ${E(c.type)}</p>
+                    </div>
+                    <div class="row">
+                      <span class="config-value">${E(JSON.stringify(c.value))}</span
+                      >${writable('config') ? `${B('Edit', 'edit-config', { id: c.key, kind: 'small', icon: 'edit' })}${B('ลบ', 'delete-config', { id: c.key, kind: 'danger small' })}` : ''}
+                    </div>
+                  </div>`,
+              )
+              .join('') || empty('ไม่พบ Configuration', 'ลองเปลี่ยนคำค้นหา')
+          }
+        </section>`
+    );
+  }
+  function usersView() {
+    const rows = state.data.rows.filter(
+      (u) =>
+        matches(u.username, state.data.roles.find((r) => r.id === u.role)?.name) &&
+        (state.filter === 'all' || (state.filter === 'active' ? u.active : !u.active)),
+    );
+    return (
+      pageHead(
+        'Users & permissions',
+        'จัดการบัญชีเจ้าหน้าที่และสิทธิ์การทำงาน',
+        writable('users') ? B('Create user', 'create-user', { kind: 'primary', icon: 'plus' }) : '',
+        'ADMINISTRATION',
+      ) +
+      /* HTML */ `<section class="card">
+          <div class="toolbar">
+            ${search('ค้นหาเจ้าหน้าที่', 'ค้นหาชื่อผู้ใช้หรือบทบาท…')}${filter([
+              ['all', 'ทุกบัญชี'],
+              ['active', 'Active'],
+              ['disabled', 'Disabled'],
+            ])}
+          </div>
+          ${
+            rows.length
+              ? T(
+                  ['STAFF', 'ROLE', 'STATUS', 'LAST SIGN IN', ''],
+                  rows.map((u) => [
+                    /* HTML */ `<div class="row">
+                      <span class="avatar">${E(u.username.slice(0, 2).toUpperCase())}</span>
+                      <div class="cell-primary">
+                        ${E(u.username)}${u.id === state.user.id ? '<div class="cell-sub">บัญชีที่กำลังใช้งาน</div>' : ''}
+                      </div>
+                    </div>`,
+                    badge(state.data.roles.find((r) => r.id === u.role)?.name || u.role, 'blue'),
+                    /* HTML */ `<div class="row">
+                      ${status(u.active ? 'live' : 'disabled')}${u.temporary ? badge('Temporary password', 'amber') : ''}
+                    </div>`,
+                    date(u.lastSignIn, true),
+                    writable('users')
+                      ? /* HTML */ `<div class="table-actions">
+                          ${B('Edit', 'edit-user', { id: u.id, kind: 'small' })}${B('จัดการ', 'manage-user', { id: u.id, kind: 'small', icon: 'down' })}
+                        </div>`
+                      : '—',
+                  ]),
+                )
+              : empty('ไม่พบบัญชี', 'เปลี่ยนคำค้นหาหรือตัวกรอง')
+          }
+        </section>
+        <section class="card u-mt-22">
+          <div class="card-head">
+            <div>
+              <h2>Roles & permission matrix</h2>
+              <p>Admin พบในคลิป · บทบาทอื่นเป็นตัวอย่างที่เสนอ</p>
+            </div>
+            ${writable('users') ? B('New role', 'create-role', { kind: 'small', icon: 'plus' }) : ''}
+          </div>
+          <div class="table-scroll">
+            <table class="data-table permission-matrix">
+              <thead>
+                <tr>
+                  <th>PERMISSION GROUP</th>
+                  ${state.data.roles
+                    .filter((r) => r.id !== 'none')
+                    .map((r) => /* HTML */ `<th>${E(r.name)}</th>`)
+                    .join('')}
+                </tr>
+              </thead>
+              <tbody>
+                ${Object.entries(SafeSpaceData.permissions)
+                  .map(
+                    ([group, keys]) =>
+                      /* HTML */ `<tr>
+                        <td>
+                          <strong>${E(group)}</strong>
+                          <div class="cell-sub">${keys.map(E).join(' / ')}</div>
+                        </td>
+                        ${state.data.roles
+                          .filter((r) => r.id !== 'none')
+                          .map(
+                            (r) =>
+                              /* HTML */ `<td>
+                                ${r.permissions.includes(`${group}.write`) ? '<span class="grant">อ่าน + จัดการ</span>' : r.permissions.includes(`${group}.read`) ? 'อ่าน' : '—'}${r.permissions.includes('journeys.export') && group === 'journeys' ? '<br><span class="small">+ Export</span>' : ''}
+                              </td>`,
+                          )
+                          .join('')}
+                      </tr>`,
+                  )
+                  .join('')}
+              </tbody>
+            </table>
+          </div>
+          <div class="card-foot">
+            ชื่อสิทธิ์นี้เป็น internal UI keys · Backend ต้องตรวจและบังคับใช้สิทธิ์จริงทุก request
+          </div>
+        </section>`
+    );
+  }
+  function logsView() {
+    const rows = state.data.rows.filter(
+      (l) =>
+        matches(l.action, l.status) &&
+        (state.filter === 'all' ||
+          (state.filter === 'errors' ? l.status >= 400 : l.kind === state.filter)),
+    );
+    return (
+      pageHead(
+        'System logs',
+        'ตรวจสถานะและประวัติการทำงานอย่างเป็นระบบ',
+        B('Refresh', 'refresh', { icon: 'refresh' }),
+        'ADMINISTRATION',
+      ) +
+      /* HTML */ `<div class="status-cards">
+          <article class="card status-card">
+            <span class="metric-icon">${I('activity')}</span>
+            <div>
+              <h3>Backend API ${badge('Mock', 'blue')}</h3>
+              <p>ตอบกลับจาก Mock adapter ในเบราว์เซอร์</p>
+            </div>
+          </article>
+          <article class="card status-card">
+            <span class="metric-icon amber">${I('logs')}</span>
+            <div>
+              <h3>Database ${badge('Not connected', 'amber')}</h3>
+              <p>ไม่ได้ตรวจสถานะฐานข้อมูลจริง</p>
+            </div>
+          </article>
+        </div>
+        <section class="card">
+          <div class="toolbar">
+            ${search('ค้นหา Logs', 'ค้นหา action หรือ status…')}${filter([
+              ['all', 'ทุกประเภท'],
+              ['request', 'Requests'],
+              ['event', 'Events'],
+              ['audit', 'Audit'],
+              ['errors', 'Errors only'],
+            ])}<span class="small muted">${rows.length} รายการ</span>
+          </div>
+          ${
+            rows.length
+              ? T(
+                  ['TIMESTAMP', 'TYPE', 'ACTION / REQUEST', 'STATUS', 'DURATION'],
+                  rows.map((l) => [
+                    date(l.at, true),
+                    badge(l.kind, 'blue'),
+                    /* HTML */ `<span class="mono">${E(l.action)}</span>`,
+                    badge(String(l.status), l.status >= 400 ? 'red' : 'green'),
+                    `${l.duration} ms`,
+                  ]),
+                )
+              : empty('ไม่พบ Log', 'เปลี่ยนตัวกรองหรือรีเฟรชข้อมูล')
+          }
+          <div class="card-foot">
+            เฉพาะ metadata ที่กำหนด · ไม่มี token, password, request body หรือข้อความขอความช่วยเหลือ
+          </div>
+        </section>`
+    );
+  }
+  function codeForm(id) {
+    const c = id ? selected('codes', id) : null;
+    U.modal({
+      title: c ? 'แก้ไข Join code' : 'Create join code',
+      body: /* HTML */ `<div class="notice">การสร้างหรือแก้ไขนี้มีผลเฉพาะข้อมูลจำลอง</div>
+        ${select(
+          'Journey',
+          'journeyId',
+          state.data.journeys.map((j) => ({ value: j.id, label: j.title })),
+          c?.journeyId || state.data.journeys[0]?.id,
+          'required',
+        )}${field('Custom code (เว้นว่างเพื่อสร้างอัตโนมัติ)', 'code', c?.code || '', 'text', 'maxlength="24" pattern="[A-Za-z0-9_-]{3,24}" placeholder="เช่น SPACE26"')}
+        <div class="form-grid">
+          ${field('หมดอายุใน (นาที)', 'minutes', '', 'number', 'min="1" max="525600" placeholder="เว้นว่าง = ไม่หมดอายุ"')}${field('จำนวนใช้สูงสุด', 'maxUses', c?.maxUses ?? '', 'number', 'min="1" placeholder="เว้นว่าง = ไม่จำกัด"')}
+        </div>
+        ${c ? /* HTML */ `<label class="check"><input name="keepExpiry" type="checkbox" checked /><span>คงวันหมดอายุเดิม: ${c.expires ? date(c.expires, true) : 'ไม่หมดอายุ'} (ยกเลิกเพื่อใช้ค่าที่กรอก)</span></label>` : ''}`,
+      submit: 'ยืนยันบันทึกรหัสจำลอง',
+      onSubmit: async (d) => {
+        const minutes = d.get('minutes');
+        await mutate('codes', 'save', id, {
+          code: d.get('code'),
+          journeyId: d.get('journeyId'),
+          maxUses: d.get('maxUses') === '' ? null : Number(d.get('maxUses')),
+          expires:
+            c && d.get('keepExpiry')
+              ? c.expires
+              : minutes
+                ? new Date(Date.now() + Number(minutes) * 60000).toISOString()
+                : null,
+        });
+        await renderRoute();
+      },
+    });
+  }
+  function userForm(id) {
+    const u = id ? selected('users', id) : null;
+    U.modal({
+      title: u ? 'แก้ไขบัญชีเจ้าหน้าที่' : 'Create staff account',
+      body: /* HTML */ `<div class="notice amber">
+          บัญชีจำลอง ไม่สร้างผู้ใช้บน Backend และไม่เก็บรหัสผ่านที่กรอก
+        </div>
+        ${field('Username', 'username', u?.username || '', 'text', 'required maxlength="60" pattern="[A-Za-z0-9._-]+" autocomplete="off"')}${select(
+          'Role',
+          'role',
+          state.data.roles
+            .filter((r) => r.id !== 'none')
+            .map((r) => ({ value: r.id, label: r.name })),
+          u?.role || 'observer',
+          'required',
+        )}${!u ? field('Temporary password (ใช้ค่าตัวอย่างเท่านั้น)', 'password', '', 'password', 'required minlength="8" maxlength="128" autocomplete="new-password"') : ''}`,
+      submit: 'ยืนยันบันทึกบัญชีจำลอง',
+      onSubmit: async (d) => {
+        await mutate('users', 'save', id, formPayload(d));
+        await renderRoute();
+      },
+    });
+  }
+  async function progressModal(id) {
+    const journey = selected('journeys', id),
+      rows = await api.journeyProgress(id);
+    U.modal({
+      title: `Progress · ${journey.title}`,
+      wide: true,
+      body: /* HTML */ `<div class="notice">ข้อมูลจำลองตามสิทธิ์ export · ไม่มีข้อความขอความช่วยเหลือ</div>
+        ${T(
+          ['PLAYER', 'PROGRESS', 'STATUS', 'UPDATED'],
+          rows.map((r) => [
+            E(r.playerId),
+            String(r.progress),
+            status(r.status),
+            date(r.updated, true),
+          ]),
+        )}${!rows.length ? empty('ยังไม่มีผู้เล่น', 'ยังไม่มีความคืบหน้าใน Journey นี้') : ''}`,
+      submit: 'ดาวน์โหลด CSV จำลอง',
+      onSubmit: async () => {
+        const fresh = await api.journeyProgress(id);
+        const cols = (journey.csvColumns || 'playerId,journeyId,progress,status,updated')
+          .split(',')
+          .map((s) => s.trim());
+        const allowed = ['playerId', 'journeyId', 'progress', 'status', 'updated'];
+        if (cols.some((c) => !allowed.includes(c))) throw new Error('คอลัมน์ CSV ไม่อยู่ในรายการที่รองรับ');
+        const csv = '\ufeff' + U.csv([cols, ...fresh.map((r) => cols.map((c) => r[c]))]);
+        const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `mock-journey-${id}.csv`;
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(url), 500);
+        U.toast('ดาวน์โหลด CSV ข้อมูลจำลองแล้ว');
+      },
+    });
+  }
+  function newStep() {
+    return {
+      id: newId(),
+      name: 'ขั้นตอนใหม่',
+      npc: '',
+      passMark: null,
+      blocks: [SafeSpaceJourneyModel.dialog()],
+    };
+  }
+  async function managementAction(action, b) {
+    const id = b.dataset.id;
+    if (journeyEditor.action(action, b)) return;
+    if (action === 'select-alert') {
+      state.selected = id;
+      draw();
+      return;
+    }
+    if (['save-note', 'reply-alert', 'handle-alert', 'delete-alert'].includes(action)) {
+      const a = selected('alerts', id),
+        isReply = action === 'reply-alert',
+        note = $('#team-note')?.value || '',
+        reply = $('#reply-message')?.value || '';
+      if ((isReply && !reply.trim()) || (action === 'save-note' && !note.trim()))
+        return U.toast('กรุณากรอกข้อความก่อน');
+      const map = {
+        'save-note': ['บันทึกโน้ตทีม?', 'note', { note }],
+        'reply-alert': ['ยืนยันข้อความถึงผู้เล่น?', 'reply', { message: reply }],
+        'handle-alert': ['รับทราบคำขอนี้?', 'handle', {}],
+        'delete-alert': ['ลบคำขอนี้?', 'delete', {}],
+      };
+      const [title, op, payload] = map[action];
+      return U.confirm(
+        title,
+        `คำขอ ${a.id} · ผู้เล่น ${a.playerId}\n${isReply ? 'จำลองการตอบกลับเท่านั้น ยังไม่มีการส่งถึงหรืออ่านในเกม' : action === 'save-note' ? 'บันทึกภายในทีม ไม่ส่งให้ผู้เล่น' : action === 'handle-alert' ? 'เปลี่ยนสถานะเป็นรับทราบ ไม่ยืนยันว่าปัญหาจบแล้ว' : 'รายการจะถูกนำออกจากชุดข้อมูลจำลอง'}`,
+        async () => {
+          await mutate('alerts', op, id, payload);
+          careDrafts.delete(id);
+          await renderRoute();
+        },
+        {
+          danger: op === 'delete',
+          label: isReply ? 'ยืนยันข้อความจำลอง' : 'ยืนยัน',
+          body:
+            isReply || op === 'note'
+              ? /* HTML */ `<div class="message-bubble">${E(isReply ? reply : note)}</div>`
+              : '',
+        },
+      );
+    }
+    if (action === 'new-journey' || action === 'edit-journey') {
+      state.editor =
+        action === 'edit-journey'
+          ? SafeSpaceData.clone(selected('journeys', id))
+          : {
+              id: null,
+              title: '',
+              description: '',
+              status: 'draft',
+              version: 0,
+              outOfOrder: '',
+              revisited: '',
+              completed: '',
+              showTotals: false,
+              labels: [],
+              csvColumns: 'playerId,journeyId,progress,status,updated',
+              steps: [newStep()],
+            };
+
+      state.step = 0;
+      state.dirty = false;
+      draw();
+      return;
+    }
+    if (action === 'editor-tab') {
+      journeyEditor.focusSection(b.dataset.tab);
+      return;
+    }
+    if (action === 'select-step') {
+      state.step = +b.dataset.index;
+
+      draw();
+      return;
+    }
+    if (action === 'add-step') {
+      if (state.editor.steps.length >= 30) return U.toast('เพิ่มได้สูงสุด 30 ขั้นตอนในต้นแบบ');
+      state.editor.steps.push(newStep());
+      state.step = state.editor.steps.length - 1;
+
+      state.dirty = true;
+      draw();
+      return;
+    }
+    if (action === 'move-step') {
+      const next = state.step + Number(b.dataset.direction),
+        steps = state.editor.steps;
+      if (next < 0 || next >= steps.length) return;
+      [steps[state.step], steps[next]] = [steps[next], steps[state.step]];
+      state.step = next;
+      state.dirty = true;
+      draw();
+      return;
+    }
+    if (action === 'remove-step') {
+      if (state.editor.steps.length < 2) return;
+      return U.confirm(
+        'ลบขั้นตอนนี้?',
+        'ลบออกจากร่างปัจจุบัน ยังไม่เปลี่ยน Journey ที่บันทึกจนกดบันทึกร่าง',
+        async () => {
+          state.editor.steps.splice(state.step, 1);
+          state.step = Math.min(state.step, state.editor.steps.length - 1);
+          state.dirty = true;
+          draw();
+        },
+        { danger: true },
+      );
+    }
+    if (action === 'exit-editor') {
+      const exit = () => {
+        state.editor = null;
+        state.dirty = false;
+        draw();
+      };
+      if (state.dirty)
+        return U.confirm('ออกจาก Editor?', 'ข้อมูลที่ยังไม่บันทึกจะถูกยกเลิก', async () => exit(), {
+          label: 'ออกจาก Editor',
+        });
+      exit();
+      return;
+    }
+    if (action === 'save-journey')
+      return U.confirm(
+        'บันทึก Journey จำลอง?',
+        `ชื่อ: ${state.editor.title || '(ยังไม่มีชื่อ)'}\n${state.editor.steps.length} steps · ${state.editor.status === 'review' ? 'ส่งสถานะรอตรวจ (จำลอง)' : 'บันทึกร่าง'}\nไม่มีการเผยแพร่เข้าเกม`,
+        async () => {
+          const saved = await mutate(
+            'journeys',
+            'save',
+            state.editor.id,
+            SafeSpaceData.clone(state.editor),
+          );
+          state.editor = saved;
+          state.dirty = false;
+          await renderRoute();
+        },
+        { label: 'ยืนยันบันทึกร่าง' },
+      );
+    if (action === 'delete-journey')
+      return U.confirm(
+        'ลบ Journey?',
+        'หากมี Code หรือความคืบหน้าเชื่อมอยู่ ต้นแบบจะปฏิเสธการลบเพื่อไม่ให้ข้อมูลอ้างอิงเสีย',
+        async () => {
+          await mutate('journeys', 'delete', id);
+          await renderRoute();
+        },
+        { danger: true },
+      );
+    if (action === 'journey-progress') return progressModal(id);
+    if (action === 'create-code' || action === 'edit-code') return codeForm(id || null);
+    if (action === 'manage-code') {
+      const c = selected('codes', id);
+      return U.modal({
+        title: `จัดการ ${c.code}`,
+        body: /* HTML */ `<p class="small muted">เลือกการกระทำ แล้วตรวจผลกระทบก่อนยืนยัน</p>
+          <div class="stack">
+            ${B('Regenerate · เปลี่ยนรหัส', 'code-regenerate', { id, icon: 'refresh' })}${B('Disable · ปิดการใช้', 'code-disable', { id, icon: 'lock', disabled: c.status === 'disabled' })}${B('Expire · ให้หมดอายุ', 'code-expire', { id, icon: 'clock', disabled: c.status === 'expired' })}${B('Delete · ลบรายการ', 'code-delete', { id, kind: 'danger', icon: 'trash' })}
+          </div>`,
+      });
+    }
+    if (action.startsWith('code-')) {
+      const op = action.slice(5),
+        c = selected('codes', id);
+      return U.confirm(
+        `${op} รหัส ${c.code}?`,
+        op === 'regenerate'
+          ? 'ต้นแบบจะสร้างรหัสใหม่และแทนที่รหัสเดิม ผลจริงต่อรหัสเก่ายังต้องยืนยัน Backend'
+          : op === 'delete'
+            ? 'นำรหัสนี้ออกจากชุดข้อมูลจำลอง'
+            : 'เปลี่ยนสถานะรหัสในชุดข้อมูลจำลอง',
+        async () => {
+          await mutate('codes', op, id);
+          await renderRoute();
+        },
+        { danger: op === 'delete' },
+      );
+    }
+    if (action === 'players-back') {
+      state.selected = null;
+      draw();
+      return;
+    }
+    if (action.startsWith('player-')) {
+      const op = action.slice(7),
+        journey = state.data.journeys.find((j) => j.id === b.dataset.journey),
+        progress = selected('players', id).progress.find((g) => g.journeyId === journey.id);
+      if (op === 'step')
+        return U.modal({
+          title: 'Set player step',
+          body: /* HTML */ `<p>${E(id)} · ${E(journey.title)}</p>
+            ${select('ขั้นตอนที่บันทึกแล้ว', 'step', [{ value: 0, label: '0 · ยังไม่เริ่ม' }, ...journey.steps.map((s, i) => ({ value: i + 1, label: `${i + 1}. ${s.name}` }))], progress.step)}
+            <p class="modal-help">เปลี่ยนความคืบหน้าจำลอง ไม่เปลี่ยนสถานะ Roblox จริง</p>`,
+          submit: 'ยืนยันเปลี่ยน Step',
+          onSubmit: async (d) => {
+            await mutate('players', 'step', id, {
+              journeyId: journey.id,
+              step: Number(d.get('step')),
+            });
+            await renderRoute();
+          },
+        });
+      return U.confirm(
+        op === 'reset' ? 'Reset ความคืบหน้า?' : 'ทำเครื่องหมายว่าจบ Journey?',
+        `${id}\n${journey.title}\n${op === 'reset' ? 'กลับไป 0 steps ในข้อมูลจำลอง' : 'เปลี่ยนเป็นขั้นสุดท้ายในข้อมูลจำลอง'}`,
+        async () => {
+          await mutate('players', op, id, { journeyId: journey.id });
+          await renderRoute();
+        },
+        { danger: op === 'reset' },
+      );
+    }
+    if (action === 'delete-player')
+      return U.confirm(
+        'ลบข้อมูลผู้เล่น?',
+        `${id}\nลบ progress, quiz attempts และ activity จำลองของผู้เล่นนี้\nคำขอช่วยเหลือแยกวงจรการเก็บข้อมูล จึงไม่ลบตามอัตโนมัติ นโยบายจริงรอยืนยัน`,
+        async () => {
+          await mutate('players', 'delete', id);
+          state.selected = null;
+          await renderRoute();
+        },
+        { danger: true },
+      );
+    if (action === 'delete-attempt')
+      return U.confirm(
+        'ลบ Quiz attempt?',
+        `ผู้เล่น ${id} · รายการ ${b.dataset.attempt}\nลบเฉพาะรายการที่เลือกในข้อมูลจำลอง`,
+        async () => {
+          await mutate('players', 'deleteAttempt', id, { attemptId: b.dataset.attempt });
+          await renderRoute();
+        },
+        { danger: true },
+      );
+    if (action === 'edit-config') {
+      const c = selected('config', id);
+      return U.modal({
+        title: `แก้ไข ${c.key}`,
+        body: /* HTML */ `<p class="small muted">
+            ชนิดข้อมูลจำลอง: ${E(c.type)} · ตรวจ key/type/range จริงที่ Backend ก่อนใช้งาน
+          </p>
+          ${c.type === 'number' ? field('Value', 'value', c.value, 'number', 'required min="0" step="any"') : textarea('Value (JSON)', 'value', JSON.stringify(c.value))}`,
+        submit: 'ยืนยันบันทึกค่า',
+        onSubmit: async (d) => {
+          let value;
+          try {
+            value = JSON.parse(d.get('value'));
+          } catch {
+            throw new Error('รูปแบบ JSON ไม่ถูกต้อง');
+          }
+          await mutate('config', 'save', id, { value });
+          await renderRoute();
+        },
+      });
+    }
+    if (action === 'delete-config')
+      return U.confirm(
+        'ลบ Configuration?',
+        `Key: ${id}\nนำออกจากชุดข้อมูลจำลอง ผลต่อเกมจริงต้องยืนยันก่อนใช้`,
+        async () => {
+          await mutate('config', 'delete', id);
+          await renderRoute();
+        },
+        { danger: true },
+      );
+    if (action === 'create-user' || action === 'edit-user') return userForm(id || null);
+    if (action === 'manage-user') {
+      const u = selected('users', id);
+      return U.modal({
+        title: `จัดการ ${u.username}`,
+        body: /* HTML */ `<div class="stack">
+            ${B('Reset password', 'user-reset', { id, icon: 'lock' })}${B(u.active ? 'Disable account' : 'Enable account', 'user-disable', { id, disabled: u.id === state.user.id })}${B('Delete account', 'user-delete', { id, kind: 'danger', disabled: u.id === state.user.id })}
+          </div>
+          <p class="small muted">ต้นแบบไม่ให้ปิด/ลบบัญชีที่กำลังใช้งาน และไม่เก็บรหัสผ่านจำลอง</p>`,
+      });
+    }
+    if (action === 'user-reset')
+      return U.modal({
+        title: 'Reset temporary password',
+        body:
+          field(
+            'รหัสผ่านชั่วคราวจำลอง',
+            'password',
+            '',
+            'password',
+            'required minlength="8" maxlength="128" autocomplete="new-password"',
+          ) + '<p class="small muted">ไม่ส่งรหัสผ่านให้บุคคลใด และไม่เปลี่ยนบัญชีจริง</p>',
+        submit: 'ยืนยัน Reset จำลอง',
+        onSubmit: async (d) => {
+          await mutate('users', 'reset', id, { password: d.get('password') });
+          await renderRoute();
+        },
+      });
+    if (action === 'user-disable' || action === 'user-delete') {
+      const op = action.slice(5),
+        u = selected('users', id);
+      return U.confirm(
+        op === 'delete' ? 'ลบบัญชีนี้?' : u.active ? 'ปิดบัญชีนี้?' : 'เปิดบัญชีนี้?',
+        `บัญชี ${u.username}\nเปลี่ยนสถานะในข้อมูลจำลองเท่านั้น`,
+        async () => {
+          await mutate('users', op, id);
+          await renderRoute();
+        },
+        { danger: op === 'delete' },
+      );
+    }
+    if (action === 'create-role')
+      return U.modal({
+        title: 'Create role · บทบาทจำลอง',
+        wide: true,
+        body: `${field('ชื่อบทบาท', 'name', '', 'text', 'required maxlength="60"')}<div class="grid-2">${Object.entries(
+          SafeSpaceData.permissions,
+        )
+          .map(
+            ([group, keys]) =>
+              /* HTML */ `<div class="role-card">
+                <h3>${E(group)}</h3>
+                ${keys.map((key) => /* HTML */ `<label class="check"><input type="checkbox" name="permissions" value="${key}" /><span>${key.endsWith('.read') ? 'อ่านข้อมูล' : key.endsWith('.write') ? 'จัดการข้อมูล' : 'ดู progress / export'}</span></label>`).join('')}
+              </div>`,
+          )
+          .join('')}</div><p class="small muted">สิทธิ์เขียนหรือ export ต้องเลือกสิทธิ์อ่านของกลุ่มนั้นด้วย</p>`,
+        submit: 'ยืนยันสร้าง Role',
+        onSubmit: async (d) => {
+          const permissions = d.getAll('permissions');
+          for (const p of permissions) {
+            const group = p.split('.')[0];
+            if (!p.endsWith('.read') && !permissions.includes(`${group}.read`))
+              throw new Error(`กรุณาเลือกสิทธิ์อ่านของ ${group} ด้วย`);
+          }
+          await mutate('users', 'role', null, { name: d.get('name'), permissions });
+          await renderRoute();
+        },
+      });
+  }
+  return {
+    alertsView,
+    journeysView,
+    codesView,
+    playersView,
+    configView,
+    usersView,
+    logsView,
+    bindEditor,
+    managementAction,
+    clearDrafts: () => careDrafts.clear(),
+  };
 };

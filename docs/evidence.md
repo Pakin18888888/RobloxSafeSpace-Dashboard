@@ -8,40 +8,40 @@
 
 ## สิ่งที่เห็นในคลิป
 
-| เวลา | หน้าจอ | หลักฐานที่สังเกตได้ | ข้อจำกัด |
-|---|---|---|---|
-| 00:03–00:09 | Overview | 8 เมนู, ตัวเลข players/quizzes/submissions/unread alerts, Recent results, Players, Activity, banner default password | ตัวเลขเป็นข้อมูลเดโมในคลิป ไม่ใช่ผลโครงการ; ไม่เห็น filter วันที่ |
-| 00:12 | Alerts | ข้อความ pseudonymous mode; alert สถานะ handled; team note และ Save note; reply in game และ Send; Refresh; Delete | ข้อความระบุว่าทุกคนบน dashboard เห็น team note; ไม่เห็นการส่งจริง/การส่งถึงผู้เล่น; ไม่เห็นปุ่ม ack ในภาพนี้ แต่มี endpoint และ permission |
-| 00:15–00:18 | Journeys | รายการ journey; Progress/Edit/Delete; New journey; ข้อความเมื่อคุย NPC ผิดลำดับ/จบขั้น/จบ journey; value labels; toggle แสดง totals; CSV columns; NPC ID และ dialog | เห็นแบบฟอร์มและสิทธิ์ quizzes/dialogs; ไม่เห็นการ create/update สำเร็จหรือดาวน์โหลด CSV จริง |
-| 00:21 | Codes | Journey, custom code, expires in minutes, max uses; Create; Edit/Regenerate/Disable/Expire/Delete; live status และจำนวน uses | ไม่เห็น validation หรือผลของการแก้ไข; ห้ามสมมติว่า regenerate ยังคง code เก่าใช้ได้ |
-| 00:24–00:30 | Players | Search by id or name; Open; Journey progress; Set step/Mark done/Reset; Quiz attempts และ Delete; Alerts; Recent events | การค้นหาชื่อมีอยู่บน UI แต่ความหมายชื่อและข้อมูลที่อนุญาตต้องยืนยัน; ไม่เห็น mutation สำเร็จ |
-| 00:33 | Config | key/value JSON, alertCooldownSeconds, Edit/Delete, Save | ไม่เห็นผลต่อเกมจริง; ไม่ควรถือค่าตัวอย่างเป็นค่าที่ต้องใช้ใน production |
-| 00:36–00:42 | Users | admin built-in all permissions; active/temporary password; Reset password/Disable/Delete; Add user; role selector; New role; permission groups | researcher เป็นเพียง placeholder ชื่อ role ไม่ใช่ role ที่มีอยู่แล้ว; ไม่ทราบ permission keys |
-| 00:45 | Logs | รายการ method/path/status และ request ของ /dashboard/auth/login, /dashboard/auth/me, /dashboard/stats, /dashboard/players, /dashboard/submissions, /dashboard/events, /dashboard/alerts, /dashboard/journeys, /dashboard/users | การอ่านชื่อใน log ไม่ยืนยัน request/response schema |
-| 00:48 | Logs / API endpoints | รายชื่อ method/path, แยก game กับ dashboard; ข้อความ dashboard ใช้ x-admin-token | ไม่เห็นอายุ token, storage, refresh, revoke, logout; ไม่ควรฝังค่า token ถาวรใน Frontend |
+| เวลา        | หน้าจอ                | หลักฐานที่สังเกตได้                                                                                                                                                                                                                 | ข้อจำกัด                                                                                                               |
+| ----------- | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------- |
+| 00:03–00:09 | Overview             | 8 เมนู, ตัวเลข players/quizzes/submissions/unread alerts, Recent results, Players, Activity, banner default password                                                                                                             | ตัวเลขเป็นข้อมูลเดโมในคลิป ไม่ใช่ผลโครงการ; ไม่เห็น filter วันที่                                                                |
+| 00:12       | Alerts               | ข้อความ pseudonymous mode; alert สถานะ handled; team note และ Save note; reply in game และ Send; Refresh; Delete                                                                                                                | ข้อความระบุว่าทุกคนบน dashboard เห็น team note; ไม่เห็นการส่งจริง/การส่งถึงผู้เล่น; ไม่เห็นปุ่ม ack ในภาพนี้ แต่มี endpoint และ permission |
+| 00:15–00:18 | Journeys             | รายการ journey; Progress/Edit/Delete; New journey; ข้อความเมื่อคุย NPC ผิดลำดับ/จบขั้น/จบ journey; value labels; toggle แสดง totals; CSV columns; NPC ID และ dialog                                                                    | เห็นแบบฟอร์มและสิทธิ์ quizzes/dialogs; ไม่เห็นการ create/update สำเร็จหรือดาวน์โหลด CSV จริง                                    |
+| 00:21       | Codes                | Journey, custom code, expires in minutes, max uses; Create; Edit/Regenerate/Disable/Expire/Delete; live status และจำนวน uses                                                                                                   | ไม่เห็น validation หรือผลของการแก้ไข; ห้ามสมมติว่า regenerate ยังคง code เก่าใช้ได้                                             |
+| 00:24–00:30 | Players              | Search by id or name; Open; Journey progress; Set step/Mark done/Reset; Quiz attempts และ Delete; Alerts; Recent events                                                                                                        | การค้นหาชื่อมีอยู่บน UI แต่ความหมายชื่อและข้อมูลที่อนุญาตต้องยืนยัน; ไม่เห็น mutation สำเร็จ                                             |
+| 00:33       | Config               | key/value JSON, alertCooldownSeconds, Edit/Delete, Save                                                                                                                                                                        | ไม่เห็นผลต่อเกมจริง; ไม่ควรถือค่าตัวอย่างเป็นค่าที่ต้องใช้ใน production                                                             |
+| 00:36–00:42 | Users                | admin built-in all permissions; active/temporary password; Reset password/Disable/Delete; Add user; role selector; New role; permission groups                                                                                 | researcher เป็นเพียง placeholder ชื่อ role ไม่ใช่ role ที่มีอยู่แล้ว; ไม่ทราบ permission keys                                     |
+| 00:45       | Logs                 | รายการ method/path/status และ request ของ /dashboard/auth/login, /dashboard/auth/me, /dashboard/stats, /dashboard/players, /dashboard/submissions, /dashboard/events, /dashboard/alerts, /dashboard/journeys, /dashboard/users | การอ่านชื่อใน log ไม่ยืนยัน request/response schema                                                                        |
+| 00:48       | Logs / API endpoints | รายชื่อ method/path, แยก game กับ dashboard; ข้อความ dashboard ใช้ x-admin-token                                                                                                                                                    | ไม่เห็นอายุ token, storage, refresh, revoke, logout; ไม่ควรฝังค่า token ถาวรใน Frontend                                    |
 
 ## API ที่อ่านได้ชัดจากภาพ 00:48
 
-| Method | Path |
-|---|---|
-| POST | /dashboard/auth/login |
-| GET | /dashboard/auth/me |
-| POST | /dashboard/auth/change-password |
-| GET | /dashboard/alerts |
-| PATCH | /dashboard/alerts/:id/ack |
-| PATCH | /dashboard/alerts/:id/note |
-| DELETE | /dashboard/alerts/:id |
-| GET | /dashboard/audit |
-| GET, POST | /dashboard/codes |
-| PATCH, DELETE | /dashboard/codes/:id |
-| POST | /dashboard/codes/:id/regenerate |
-| GET | /dashboard/config |
-| PUT, DELETE | /dashboard/config/:key |
-| GET | /dashboard/dev/endpoints |
-| GET | /dashboard/dev/health |
-| GET | /dashboard/dev/logs |
-| GET | /dashboard/dialogs |
-| PUT, DELETE | /dashboard/dialogs/:key |
+| Method        | Path                            |
+| ------------- | ------------------------------- |
+| POST          | /dashboard/auth/login           |
+| GET           | /dashboard/auth/me              |
+| POST          | /dashboard/auth/change-password |
+| GET           | /dashboard/alerts               |
+| PATCH         | /dashboard/alerts/:id/ack       |
+| PATCH         | /dashboard/alerts/:id/note      |
+| DELETE        | /dashboard/alerts/:id           |
+| GET           | /dashboard/audit                |
+| GET, POST     | /dashboard/codes                |
+| PATCH, DELETE | /dashboard/codes/:id            |
+| POST          | /dashboard/codes/:id/regenerate |
+| GET           | /dashboard/config               |
+| PUT, DELETE   | /dashboard/config/:key          |
+| GET           | /dashboard/dev/endpoints        |
+| GET           | /dashboard/dev/health           |
+| GET           | /dashboard/dev/logs             |
+| GET           | /dashboard/dialogs              |
+| PUT, DELETE   | /dashboard/dialogs/:key         |
 
 มี `POST /auth/roblox/token` ระบุ used by game จึงไม่ใช้เป็น Login ของ Web Dashboard ส่วน `GET /` ระบุ other ไม่ใช่ flow หลักของงานนี้
 

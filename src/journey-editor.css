@@ -1,0 +1,291 @@
+/* Sequential form cards keep the authoring task separate from admin tables. */
+.dialog-line,
+.question-card {
+  display: grid;
+  gap: 16px;
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface-2);
+  min-width: 0;
+}
+.content-block h2 {
+  margin-top: 6px;
+}
+.content-controls {
+  flex-wrap: wrap;
+  gap: 5px;
+}
+.content-add-bar {
+  border: 1px dashed var(--teal);
+}
+@media (max-width: 600px) {
+  .dialog-line,
+  .question-card {
+    padding: 14px 10px;
+  }
+  .content-block > .row,
+  .question-card > .row,
+  .dialog-line > .row {
+    align-items: flex-start;
+  }
+}
+body:has(.journey-form) #toast {
+  top: 86px;
+  bottom: auto;
+}
+.journey-form :is(input, textarea, select, button, summary) {
+  scroll-margin-block: 110px;
+}
+.journey-form {
+  max-width: 860px;
+  margin: 0 auto;
+  display: grid;
+  gap: 22px;
+}
+.form-section-nav {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.form-section-nav button {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  padding: 8px 4px;
+  font-size: 13px;
+}
+.form-section-nav button span,
+.step-pills button span {
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  width: 26px;
+  height: 26px;
+  background: var(--tint);
+  color: var(--teal);
+  flex-shrink: 0;
+}
+.form-section-nav button:hover {
+  color: var(--teal);
+}
+.form-card {
+  padding: 28px;
+  display: grid;
+  gap: 19px;
+  scroll-margin-top: 25px;
+}
+.form-intro {
+  border-top: 6px solid var(--teal);
+}
+.form-card-heading h2 {
+  margin: 7px 0;
+  font-size: 21px;
+}
+.form-card-heading p,
+.field-hint {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.7;
+}
+.form-eyebrow {
+  color: var(--teal);
+  font-weight: 600;
+  font-size: 11px;
+  letter-spacing: 1px;
+}
+.form-card .field input,
+.form-card .field textarea,
+.form-card .field select {
+  background: var(--surface-2);
+}
+.step-selector {
+  padding: 24px 28px;
+  display: grid;
+  gap: 18px;
+}
+.step-selector h2 {
+  margin-top: 6px;
+}
+.step-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.step-pills button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-align: left;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  border-radius: 9px;
+  padding: 8px 12px;
+  font-size: 12px;
+}
+.step-pills button[aria-pressed='true'] {
+  border-color: var(--teal);
+  background: var(--tint);
+  color: var(--teal);
+}
+.step-form {
+  border-left: 4px solid var(--teal);
+}
+.question-form {
+  border-left: 4px solid var(--blue);
+}
+.step-footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  border-top: 1px solid var(--border);
+  padding-top: 18px;
+}
+.quiz-toggle {
+  padding: 13px 16px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+}
+.choice-list {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+.choice-list legend {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+.choice-list legend span {
+  margin-left: 8px;
+  font-weight: 400;
+}
+.choice-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 10px 0;
+}
+.choice-row input[data-choice] {
+  min-width: 0;
+  flex: 1;
+  width: 100%;
+  padding: 10px 6px;
+  background: transparent;
+  color: var(--ink);
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  border-radius: 0;
+  font: inherit;
+  font-size: 13px;
+}
+.choice-row input[type='radio'],
+.choice-dot {
+  flex: 0 0 18px;
+  width: 18px;
+  height: 18px;
+  accent-color: var(--teal);
+}
+.choice-dot {
+  border: 1px solid var(--muted);
+  border-radius: 50%;
+}
+.quiz-empty {
+  padding: 20px;
+  border: 1px dashed var(--border);
+  color: var(--muted);
+  font-size: 13px;
+  border-radius: 10px;
+}
+.advanced-settings summary {
+  padding: 22px 28px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+}
+.advanced-settings summary span {
+  display: block;
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 6px;
+  font-weight: 400;
+}
+.advanced-body {
+  padding: 0 28px 28px;
+  display: grid;
+  gap: 18px;
+}
+.editor-save-bar {
+  position: sticky;
+  bottom: 16px;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 17px 22px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 8px 30px #00162b14;
+}
+.editor-save-bar strong {
+  display: block;
+  font-size: 13px;
+}
+.editor-save-bar span {
+  display: block;
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 3px;
+}
+@media (max-width: 600px) {
+  .journey-form {
+    gap: 16px;
+  }
+  .form-card,
+  .step-selector {
+    padding: 20px 16px;
+  }
+  .form-card-heading h2 {
+    font-size: 18px;
+  }
+  .form-section-nav {
+    gap: 6px;
+  }
+  .form-section-nav button {
+    font-size: 11px;
+    gap: 5px;
+  }
+  .form-section-nav button span {
+    width: 22px;
+    height: 22px;
+  }
+  .advanced-settings summary {
+    padding: 20px 16px;
+  }
+  .advanced-body {
+    padding: 0 16px 20px;
+  }
+  .editor-save-bar {
+    padding: 12px;
+    bottom: 8px;
+    flex-wrap: wrap;
+  }
+  .step-footer .row {
+    gap: 6px;
+  }
+  .choice-row {
+    gap: 8px;
+  }
+}

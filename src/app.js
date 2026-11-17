@@ -2,79 +2,952 @@
 (function () {
   'use strict';
   const { MockService, ServiceError } = SafeSpaceService;
-  const U = SafeSpaceUI, { escape: E, icon: I, btn: B, badge, table: T, status, date, input: field, textarea, select } = U;
+  const U = SafeSpaceUI,
+    {
+      escape: E,
+      icon: I,
+      btn: B,
+      badge,
+      table: T,
+      status,
+      date,
+      input: field,
+      textarea,
+      select,
+    } = U;
   const api = new MockService();
-  const nav = [['overview', 'Overview', 'ภาพรวมการใช้งาน', 'grid'], ['alerts', 'Alerts', 'คำขอจากผู้เล่น', 'bell'], ['journeys', 'Journeys', 'เนื้อหาและเส้นทางกิจกรรม', 'route'], ['codes', 'Codes', 'รหัสเข้าร่วมกิจกรรม', 'code'], ['players', 'Players', 'ข้อมูลและความคืบหน้าผู้เล่น', 'people'], ['config', 'Config', 'การตั้งค่าระบบเกม', 'settings'], ['users', 'Users & permissions', 'เจ้าหน้าที่และสิทธิ์', 'shield'], ['logs', 'Logs', 'สถานะและประวัติระบบ', 'logs']];
-  const state = { user: null, page: 'overview', data: null, query: '', filter: 'all', selected: null, range: 7, request: 0, editor: null, editorTab: 'details', step: 0, dirty: false, theme: 'light', loginScenario: 'success', loginRole: 'admin' };
-  const $ = s => document.querySelector(s);
-  const can = p => !!state.user?.permissions.includes(p);
-  const perm = page => `${page}.read`;
-  const writable = page => can(`${page}.write`);
+  const nav = [
+    ['overview', 'Overview', 'ภาพรวมการใช้งาน', 'grid'],
+    ['alerts', 'Alerts', 'คำขอจากผู้เล่น', 'bell'],
+    ['journeys', 'Journeys', 'เนื้อหาและเส้นทางกิจกรรม', 'route'],
+    ['codes', 'Codes', 'รหัสเข้าร่วมกิจกรรม', 'code'],
+    ['players', 'Players', 'ข้อมูลและความคืบหน้าผู้เล่น', 'people'],
+    ['config', 'Config', 'การตั้งค่าระบบเกม', 'settings'],
+    ['users', 'Users & permissions', 'เจ้าหน้าที่และสิทธิ์', 'shield'],
+    ['logs', 'Logs', 'สถานะและประวัติระบบ', 'logs'],
+  ];
+  const state = {
+    user: null,
+    page: 'overview',
+    data: null,
+    query: '',
+    filter: 'all',
+    selected: null,
+    range: 7,
+    request: 0,
+    editor: null,
+    step: 0,
+    dirty: false,
+    theme: 'light',
+    loginScenario: 'success',
+    loginRole: 'admin',
+  };
+  const $ = (s) => document.querySelector(s);
+  const can = (p) => !!state.user?.permissions.includes(p);
+  const perm = (page) => `${page}.read`;
+  const writable = (page) => can(`${page}.write`);
   const newId = () => `draft-${Math.random().toString(36).slice(2, 10)}`;
-  const brand = () => `<div class="brand"><span class="brand-mark" aria-hidden="true">s</span><div><div class="brand-title">safe space<span style="color:#72cabb">.</span></div><div class="brand-sub">ROBLOX / ADMIN</div></div></div>`;
-  function theme() { document.documentElement.dataset.theme = state.theme; document.querySelectorAll('[data-action=theme]').forEach(b => { b.innerHTML = I(state.theme === 'dark' ? 'sun' : 'moon'); b.setAttribute('aria-label', state.theme === 'dark' ? 'ใช้โหมดสว่าง' : 'ใช้โหมดมืด') }) }
-  function toggleTheme() { state.theme = state.theme === 'dark' ? 'light' : 'dark'; theme(); try { localStorage.setItem('safe-space-theme', state.theme) } catch { } }
-  try { state.theme = localStorage.getItem('safe-space-theme') === 'dark' ? 'dark' : 'light' } catch { } theme();
-  function authError(error) { if (['UNAUTHENTICATED', 'PASSWORD_REQUIRED'].includes(error.code)) { state.request++; state.user = null; state.data = null; state.editor = null; state.dirty = false; management.clearDrafts(); U.closeModal(true); api.logout(); showLogin(error.message); return true; } return false; }
+  const brand = () =>
+    /* HTML */ `<div class="brand">
+      <span class="brand-mark" aria-hidden="true">s</span>
+      <div>
+        <div class="brand-title">safe space<span class="u-text-72cabb">.</span></div>
+        <div class="brand-sub">ROBLOX / ADMIN</div>
+      </div>
+    </div>`;
+  function theme() {
+    document.documentElement.dataset.theme = state.theme;
+    document.querySelectorAll('[data-action=theme]').forEach((b) => {
+      b.innerHTML = I(state.theme === 'dark' ? 'sun' : 'moon');
+      b.setAttribute('aria-label', state.theme === 'dark' ? 'ใช้โหมดสว่าง' : 'ใช้โหมดมืด');
+    });
+  }
+  function toggleTheme() {
+    state.theme = state.theme === 'dark' ? 'light' : 'dark';
+    theme();
+    try {
+      localStorage.setItem('safe-space-theme', state.theme);
+    } catch {}
+  }
+  try {
+    state.theme = localStorage.getItem('safe-space-theme') === 'dark' ? 'dark' : 'light';
+  } catch {}
+  theme();
+  function authError(error) {
+    if (['UNAUTHENTICATED', 'PASSWORD_REQUIRED'].includes(error.code)) {
+      state.request++;
+      state.user = null;
+      state.data = null;
+      state.editor = null;
+      state.dirty = false;
+      management.clearDrafts();
+      U.closeModal(true);
+      api.logout();
+      showLogin(error.message);
+      return true;
+    }
+    return false;
+  }
   function showLogin(reason = '') {
-    state.request++; const version = state.request; state.data = null; document.title = 'Login · Safe Space';
-    $('#app').innerHTML = `<main class="auth" id="main"><section class="auth-story">${brand()}<div><div class="tag" style="color:#9dc9c8">A LITTLE CARE. A SAFER SPACE.</div><h1>Good experiences.<br><em>Thoughtful care.</em></h1><p>พื้นที่ทำงานของทีมดูแล Roblox Safe Space<br>จัดการกิจกรรมและข้อมูลอย่างใส่ใจ ในพื้นที่เดียว</p><div class="auth-art" aria-hidden="true"><i class="arch a"></i><i class="arch b"></i><i class="arch c"></i><i class="orbit"></i></div></div><footer>Roblox Safe Space · Staff workspace<br>Frontend review edition / 2026</footer></section><section class="auth-side"><button class="btn icon-btn ghost auth-theme" data-action="theme" aria-label="เปลี่ยนธีม">${I('moon')}</button><div class="auth-form">${badge('FRONTEND PREVIEW', 'blue')}<h2>ยินดีต้อนรับกลับ</h2><p>เข้าสู่พื้นที่ทำงานสำหรับเจ้าหน้าที่</p><form id="login-form">${field('ชื่อผู้ใช้', 'username', '', 'text', 'autocomplete="username" required maxlength="60" placeholder="กรอกชื่อผู้ใช้"')}<label class="field" for="password">รหัสผ่าน</label><div class="password" style="margin-top:-12px"><input id="password" name="password" type="password" autocomplete="current-password" required maxlength="128" placeholder="กรอกรหัสผ่าน"><button class="btn icon-btn" type="button" data-action="password" aria-label="แสดงรหัสผ่าน" aria-pressed="false">${I('eye')}</button></div><div id="login-error" class="form-error" role="alert" ${reason ? '' : 'hidden'}>${E(reason)}</div><button class="btn primary full" type="submit">เข้าสู่ระบบ ${I('arrow')}</button></form><div class="auth-demo"><div class="row between"><div><strong class="small">ทดลองด้วยบัญชีจำลอง</strong><p class="small muted">demo / demo-only · ไม่ใช้บัญชีจริง</p></div>${B('กรอกให้', 'fill-demo', { kind: 'small', icon: 'arrow' })}</div><details style="margin-top:15px"><summary>สถานการณ์ทดสอบ Login</summary><div class="stack">${select('ผลการเข้าสู่ระบบ', 'loginScenario', [{ value: 'success', label: 'สำเร็จ' }, { value: 'invalid', label: 'ชื่อผู้ใช้หรือรหัสผ่านผิด' }, { value: 'network', label: 'ระบบไม่ตอบสนอง' }, { value: 'temporary', label: 'รหัสผ่านชั่วคราว' }, { value: 'forbidden', label: 'ไม่มีสิทธิ์' }], state.loginScenario)}${select('บทบาทจำลอง', 'loginRole', SafeSpaceData.rolePresets.filter(r => r.id !== 'none').map(r => ({ value: r.id, label: r.name })), state.loginRole)}</div></details></div><div class="notice">${I('info')}ข้อมูลสมมติทั้งหมด · ยังไม่เชื่อม Backend<br>การเปลี่ยนแปลงจะอยู่เฉพาะในหน้านี้และรีเซ็ตเมื่อโหลดเว็บใหม่</div><div class="auth-links"><a href="flow-review.html">User flow & Workflow ↗</a><a href="workflow.html">Sitemap & Workflow ↗</a><a href="design-system.html">Design system ↗</a></div></div></section></main>`;
-    theme(); $('#login-form').onsubmit = async e => { e.preventDefault(); const form = e.currentTarget; const d = new FormData(form); const submit = form.querySelector('[type=submit]'); submit.disabled = true; submit.textContent = 'กำลังเข้าสู่ระบบ…'; $('#login-error').hidden = true; try { const session = await api.login(d.get('username').trim(), d.get('password'), { scenario: state.loginScenario, role: state.loginRole }); if (version !== state.request) return; form.reset(); state.user = session; if (session.temporary) showChangePassword(); else { const target = nav.find(n => can(perm(n[0])))?.[0]; go(target || 'overview', true) } } catch (error) { if (version !== state.request) return; $('#login-error').textContent = error.message; $('#login-error').hidden = false; submit.disabled = false; submit.innerHTML = `เข้าสู่ระบบ ${I('arrow')}`; } };
-    $('#app').querySelector('[name=loginScenario]').onchange = e => state.loginScenario = e.target.value; $('#app').querySelector('[name=loginRole]').onchange = e => state.loginRole = e.target.value;
+    state.request++;
+    const version = state.request;
+    state.data = null;
+    document.title = 'Login · Safe Space';
+    $('#app').innerHTML = /* HTML */ `<main class="auth" id="main">
+      <section class="auth-story">
+        ${brand()}
+        <div>
+          <div class="tag u-text-9dc9c8">A LITTLE CARE. A SAFER SPACE.</div>
+          <h1>Good experiences.<br /><em>Thoughtful care.</em></h1>
+          <p>พื้นที่ทำงานของทีมดูแล Roblox Safe Space<br />จัดการกิจกรรมและข้อมูลอย่างใส่ใจ ในพื้นที่เดียว</p>
+          <div class="auth-art" aria-hidden="true">
+            <i class="arch a"></i><i class="arch b"></i><i class="arch c"></i><i class="orbit"></i>
+          </div>
+        </div>
+        <footer>Roblox Safe Space · Staff workspace<br />Frontend review edition / 2026</footer>
+      </section>
+      <section class="auth-side">
+        <button class="btn icon-btn ghost auth-theme" data-action="theme" aria-label="เปลี่ยนธีม">
+          ${I('moon')}
+        </button>
+        <div class="auth-form">
+          ${badge('FRONTEND PREVIEW', 'blue')}
+          <h2>ยินดีต้อนรับกลับ</h2>
+          <p>เข้าสู่พื้นที่ทำงานสำหรับเจ้าหน้าที่</p>
+          <form id="login-form">
+            ${field('ชื่อผู้ใช้', 'username', '', 'text', 'autocomplete="username" required maxlength="60" placeholder="กรอกชื่อผู้ใช้"')}<label
+              class="field"
+              for="password"
+              >รหัสผ่าน</label
+            >
+            <div class="password u-mt-neg-12">
+              <input
+                id="password"
+                name="password"
+                type="password"
+                autocomplete="current-password"
+                required
+                maxlength="128"
+                placeholder="กรอกรหัสผ่าน"
+              /><button
+                class="btn icon-btn"
+                type="button"
+                data-action="password"
+                aria-label="แสดงรหัสผ่าน"
+                aria-pressed="false"
+              >
+                ${I('eye')}
+              </button>
+            </div>
+            <div id="login-error" class="form-error" role="alert" ${reason ? '' : 'hidden'}>
+              ${E(reason)}
+            </div>
+            <button class="btn primary full" type="submit">เข้าสู่ระบบ ${I('arrow')}</button>
+          </form>
+          <div class="auth-demo">
+            <div class="row between">
+              <div>
+                <strong class="small">ทดลองด้วยบัญชีจำลอง</strong>
+                <p class="small muted">demo / demo-only · ไม่ใช้บัญชีจริง</p>
+              </div>
+              ${B('กรอกให้', 'fill-demo', { kind: 'small', icon: 'arrow' })}
+            </div>
+            <details class="u-mt-15">
+              <summary>สถานการณ์ทดสอบ Login</summary>
+              <div class="stack">
+                ${select(
+                  'ผลการเข้าสู่ระบบ',
+                  'loginScenario',
+                  [
+                    { value: 'success', label: 'สำเร็จ' },
+                    { value: 'invalid', label: 'ชื่อผู้ใช้หรือรหัสผ่านผิด' },
+                    { value: 'network', label: 'ระบบไม่ตอบสนอง' },
+                    { value: 'temporary', label: 'รหัสผ่านชั่วคราว' },
+                    { value: 'forbidden', label: 'ไม่มีสิทธิ์' },
+                  ],
+                  state.loginScenario,
+                )}${select(
+                  'บทบาทจำลอง',
+                  'loginRole',
+                  SafeSpaceData.rolePresets
+                    .filter((r) => r.id !== 'none')
+                    .map((r) => ({ value: r.id, label: r.name })),
+                  state.loginRole,
+                )}
+              </div>
+            </details>
+          </div>
+          <div class="notice">
+            ${I('info')}ข้อมูลสมมติทั้งหมด · ยังไม่เชื่อม Backend<br />การเปลี่ยนแปลงจะอยู่เฉพาะในหน้านี้และรีเซ็ตเมื่อโหลดเว็บใหม่
+          </div>
+          <div class="auth-links">
+            <a href="flow-review.html">User flow & Workflow ↗</a
+            ><a href="workflow.html">Sitemap & Workflow ↗</a
+            ><a href="design-system.html">Design system ↗</a>
+          </div>
+        </div>
+      </section>
+    </main>`;
+    theme();
+    $('#login-form').onsubmit = async (e) => {
+      e.preventDefault();
+      const form = e.currentTarget;
+      const d = new FormData(form);
+      const submit = form.querySelector('[type=submit]');
+      submit.disabled = true;
+      submit.textContent = 'กำลังเข้าสู่ระบบ…';
+      $('#login-error').hidden = true;
+      try {
+        const session = await api.login(d.get('username').trim(), d.get('password'), {
+          scenario: state.loginScenario,
+          role: state.loginRole,
+        });
+        if (version !== state.request) return;
+        form.reset();
+        state.user = session;
+        if (session.temporary) showChangePassword();
+        else {
+          const target = nav.find((n) => can(perm(n[0])))?.[0];
+          go(target || 'overview', true);
+        }
+      } catch (error) {
+        if (version !== state.request) return;
+        $('#login-error').textContent = error.message;
+        $('#login-error').hidden = false;
+        submit.disabled = false;
+        submit.innerHTML = `เข้าสู่ระบบ ${I('arrow')}`;
+      }
+    };
+    $('#app').querySelector('[name=loginScenario]').onchange = (e) =>
+      (state.loginScenario = e.target.value);
+    $('#app').querySelector('[name=loginRole]').onchange = (e) =>
+      (state.loginRole = e.target.value);
   }
-  function showChangePassword() { state.request++; $('#app').innerHTML = `<main class="auth" id="main"><section class="auth-story">${brand()}<div><h1>A fresh start.<br><em>A safer account.</em></h1><p>ตั้งรหัสผ่านใหม่ก่อนเข้าสู่ข้อมูล<br>นโยบายจริงและการบังคับใช้ยังรอ Backend ยืนยัน</p></div><footer>Temporary password / Mock workflow</footer></section><section class="auth-side"><div class="auth-form">${badge('TEMPORARY PASSWORD', 'amber')}<h2>ตั้งรหัสผ่านใหม่</h2><p>ใช้ข้อมูลสมมติเท่านั้น · ความยาว 8–128 ตัวอักษรเป็นกติกาจำลอง</p><form id="password-form">${field('รหัสผ่านใหม่', 'password', '', 'password', 'required minlength="8" maxlength="128" autocomplete="new-password"')}${field('ยืนยันรหัสผ่านใหม่', 'confirm', '', 'password', 'required minlength="8" maxlength="128" autocomplete="new-password"')}<div id="login-error" class="form-error" role="alert" hidden></div><button class="btn primary" type="submit">บันทึกรหัสผ่านจำลอง ${I('arrow')}</button>${B('ออกจากระบบ', 'logout', { kind: 'ghost' })}</form></div></section></main>`; $('#password-form').onsubmit = async e => { e.preventDefault(); const f = e.currentTarget, d = new FormData(f), v = state.request, b = f.querySelector('[type=submit]'); b.disabled = true; try { const session = await api.changePassword(d.get('password'), d.get('confirm')); if (v !== state.request) return; state.user = session; f.reset(); go(nav.find(n => can(perm(n[0])))?.[0] || 'overview', true) } catch (err) { if (v !== state.request) return; if (authError(err)) return; $('#login-error').textContent = err.message; $('#login-error').hidden = false; b.disabled = false; } }; }
-  function shell() { const current = nav.find(n => n[0] === state.page) || nav[0]; $('#app').innerHTML = `<div class="app-shell"><button class="mobile-overlay" data-action="close-menu" aria-label="ปิดเมนู"></button><aside class="sidebar" id="sidebar">${brand()}<nav aria-label="เมนูหลัก"><div class="nav-group">WORKSPACE</div>${nav.map((n, i) => `${i === 5 ? '<div class="nav-group">ADMINISTRATION</div>' : ''}${can(perm(n[0])) ? `<a class="nav-item" href="#/${n[0]}" data-nav="${n[0]}" ${state.page === n[0] ? 'aria-current="page"' : ''}>${I(n[3])}<span>${n[1]}</span></a>` : ''}`).join('')}</nav><div class="sidebar-bottom"><a class="nav-item" href="flow-review.html">${I('route')}<span>Flow & documentation</span></a><div class="workspace-card"><strong>Frontend preview</strong><span>Mock data · ไม่เชื่อมระบบจริง</span></div><div class="side-user"><span class="avatar">AD</span><div><strong>${E(state.user.username)}</strong><small>${E(state.user.roleName)} · Mock</small></div><button class="btn icon-btn ghost" data-action="logout" aria-label="ออกจากระบบ">${I('logout')}</button></div></div></aside><div class="workspace"><header class="topbar"><div class="row"><button class="btn icon-btn ghost mobile-menu" data-action="menu" aria-label="เปิดเมนู" aria-expanded="false">${I('menu')}</button><div class="breadcrumb"><span>Workspace</span><span>/</span><b>${current[1]}</b></div></div><div class="top-actions"><span class="badge amber mock-label">Mock environment</span><button class="btn icon-btn ghost" data-action="qa" aria-label="เปิดแผงทดสอบสถานะ">${I('flask')}</button><button class="btn icon-btn ghost" data-action="theme" aria-label="เปลี่ยนธีม">${I('moon')}</button><span class="top-divider"></span><span class="avatar">AD</span><span class="staff-name small">${E(state.user.roleName)}</span></div></header><main class="content" id="main"><div id="view"></div><footer class="page-footer"><span>Roblox Safe Space · Staff workspace</span><span>ข้อมูลสมมติ / Frontend v0.2 · เวลาแสดงเป็น Asia/Bangkok</span></footer></main></div></div>`; theme(); syncDrawer(); document.title = `${current[1]} · Safe Space` }
-  function pageHead(title, description, actions = '', eyebrow = 'WORKSPACE') { return `<div class="page-head"><div><div class="tag">${eyebrow}</div><h1>${title}</h1><p>${description}</p></div><div class="row">${actions}</div></div><div class="demo-bar"><span><i class="dot"></i>Mock data · การเปลี่ยนแปลงในหน่วยความจำเท่านั้น</span><span class="freshness">Snapshot ตัวอย่าง: 16 พ.ย. 2026</span></div>` }
-  function loading() { return `<div role="status"><p class="loading-sr">กำลังโหลดข้อมูลจำลอง…</p><div class="loading-grid">${Array(4).fill('<div class="skeleton"></div>').join('')}</div><div class="skeleton skeleton-block"></div></div>` }
-  function go(page, replace = false) { if (state.dirty) { U.confirm('ออกจากหน้าแก้ไข?', 'การแก้ไขที่ยังไม่บันทึกจะถูกยกเลิก', async () => { state.dirty = false; state.editor = null; go(page, true) }, { label: 'ออกจากหน้า' }); return; } const next = nav.some(n => n[0] === page) ? page : 'overview'; state.page = next; state.selected = null; state.query = ''; state.filter = 'all'; state.editor = null; state.dirty = false; if (replace) history.replaceState(null, '', `#/${next}`); else if (location.hash !== `#/${next}`) history.pushState(null, '', `#/${next}`); renderRoute(); window.scrollTo({top:0,behavior:'instant'}); }
+  function showChangePassword() {
+    state.request++;
+    $('#app').innerHTML = /* HTML */ `<main class="auth" id="main">
+      <section class="auth-story">
+        ${brand()}
+        <div>
+          <h1>A fresh start.<br /><em>A safer account.</em></h1>
+          <p>ตั้งรหัสผ่านใหม่ก่อนเข้าสู่ข้อมูล<br />นโยบายจริงและการบังคับใช้ยังรอ Backend ยืนยัน</p>
+        </div>
+        <footer>Temporary password / Mock workflow</footer>
+      </section>
+      <section class="auth-side">
+        <div class="auth-form">
+          ${badge('TEMPORARY PASSWORD', 'amber')}
+          <h2>ตั้งรหัสผ่านใหม่</h2>
+          <p>ใช้ข้อมูลสมมติเท่านั้น · ความยาว 8–128 ตัวอักษรเป็นกติกาจำลอง</p>
+          <form id="password-form">
+            ${field('รหัสผ่านใหม่', 'password', '', 'password', 'required minlength="8" maxlength="128" autocomplete="new-password"')}${field('ยืนยันรหัสผ่านใหม่', 'confirm', '', 'password', 'required minlength="8" maxlength="128" autocomplete="new-password"')}
+            <div id="login-error" class="form-error" role="alert" hidden></div>
+            <button class="btn primary" type="submit">บันทึกรหัสผ่านจำลอง ${I('arrow')}</button
+            >${B('ออกจากระบบ', 'logout', { kind: 'ghost' })}
+          </form>
+        </div>
+      </section>
+    </main>`;
+    $('#password-form').onsubmit = async (e) => {
+      e.preventDefault();
+      const f = e.currentTarget,
+        d = new FormData(f),
+        v = state.request,
+        b = f.querySelector('[type=submit]');
+      b.disabled = true;
+      try {
+        const session = await api.changePassword(d.get('password'), d.get('confirm'));
+        if (v !== state.request) return;
+        state.user = session;
+        f.reset();
+        go(nav.find((n) => can(perm(n[0])))?.[0] || 'overview', true);
+      } catch (err) {
+        if (v !== state.request) return;
+        if (authError(err)) return;
+        $('#login-error').textContent = err.message;
+        $('#login-error').hidden = false;
+        b.disabled = false;
+      }
+    };
+  }
+  function shell() {
+    const current = nav.find((n) => n[0] === state.page) || nav[0];
+    $('#app').innerHTML = /* HTML */ `<div class="app-shell">
+      <button class="mobile-overlay" data-action="close-menu" aria-label="ปิดเมนู"></button>
+      <aside class="sidebar" id="sidebar">
+        ${brand()}
+        <nav aria-label="เมนูหลัก">
+          <div class="nav-group">WORKSPACE</div>
+          ${nav.map((n, i) => `${i === 5 ? '<div class="nav-group">ADMINISTRATION</div>' : ''}${can(perm(n[0])) ? /* HTML */ `<a class="nav-item" href="#/${n[0]}" data-nav="${n[0]}" ${state.page === n[0] ? 'aria-current="page"' : ''}>${I(n[3])}<span>${n[1]}</span></a>` : ''}`).join('')}
+        </nav>
+        <div class="sidebar-bottom">
+          <a class="nav-item" href="flow-review.html"
+            >${I('route')}<span>Flow & documentation</span></a
+          >
+          <div class="workspace-card">
+            <strong>Frontend preview</strong><span>Mock data · ไม่เชื่อมระบบจริง</span>
+          </div>
+          <div class="side-user">
+            <span class="avatar">AD</span>
+            <div>
+              <strong>${E(state.user.username)}</strong
+              ><small>${E(state.user.roleName)} · Mock</small>
+            </div>
+            <button class="btn icon-btn ghost" data-action="logout" aria-label="ออกจากระบบ">
+              ${I('logout')}
+            </button>
+          </div>
+        </div>
+      </aside>
+      <div class="workspace">
+        <header class="topbar">
+          <div class="row">
+            <button
+              class="btn icon-btn ghost mobile-menu"
+              data-action="menu"
+              aria-label="เปิดเมนู"
+              aria-expanded="false"
+            >
+              ${I('menu')}
+            </button>
+            <div class="breadcrumb"><span>Workspace</span><span>/</span><b>${current[1]}</b></div>
+          </div>
+          <div class="top-actions">
+            <span class="badge amber mock-label">Mock environment</span
+            ><button class="btn icon-btn ghost" data-action="qa" aria-label="เปิดแผงทดสอบสถานะ">
+              ${I('flask')}</button
+            ><button class="btn icon-btn ghost" data-action="theme" aria-label="เปลี่ยนธีม">
+              ${I('moon')}</button
+            ><span class="top-divider"></span><span class="avatar">AD</span
+            ><span class="staff-name small">${E(state.user.roleName)}</span>
+          </div>
+        </header>
+        <main class="content" id="main">
+          <div id="view"></div>
+          <footer class="page-footer">
+            <span>Roblox Safe Space · Staff workspace</span
+            ><span>ข้อมูลสมมติ / Frontend v0.4 · เวลาแสดงเป็น Asia/Bangkok</span>
+          </footer>
+        </main>
+      </div>
+    </div>`;
+    theme();
+    syncDrawer();
+    document.title = `${current[1]} · Safe Space`;
+  }
+  function pageHead(title, description, actions = '', eyebrow = 'WORKSPACE') {
+    return /* HTML */ `<div class="page-head">
+        <div>
+          <div class="tag">${eyebrow}</div>
+          <h1>${title}</h1>
+          <p>${description}</p>
+        </div>
+        <div class="row">${actions}</div>
+      </div>
+      <div class="demo-bar">
+        <span><i class="dot"></i>Mock data · การเปลี่ยนแปลงในหน่วยความจำเท่านั้น</span
+        ><span class="freshness">Snapshot ตัวอย่าง: 16 พ.ย. 2026</span>
+      </div>`;
+  }
+  function loading() {
+    return /* HTML */ `<div role="status">
+      <p class="loading-sr">กำลังโหลดข้อมูลจำลอง…</p>
+      <div class="loading-grid">${Array(4).fill('<div class="skeleton"></div>').join('')}</div>
+      <div class="skeleton skeleton-block"></div>
+    </div>`;
+  }
+  function go(page, replace = false) {
+    if (state.dirty) {
+      U.confirm(
+        'ออกจากหน้าแก้ไข?',
+        'การแก้ไขที่ยังไม่บันทึกจะถูกยกเลิก',
+        async () => {
+          state.dirty = false;
+          state.editor = null;
+          go(page, true);
+        },
+        { label: 'ออกจากหน้า' },
+      );
+      return;
+    }
+    const next = nav.some((n) => n[0] === page) ? page : 'overview';
+    state.page = next;
+    state.selected = null;
+    state.query = '';
+    state.filter = 'all';
+    state.editor = null;
+    state.dirty = false;
+    if (replace) history.replaceState(null, '', `#/${next}`);
+    else if (location.hash !== `#/${next}`) history.pushState(null, '', `#/${next}`);
+    renderRoute();
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }
   async function renderRoute() {
-    if (!state.user) return showLogin(); state.request++; state.data=null; const request = state.request; shell(); if (!can(perm(state.page))) { $('#view').innerHTML = pageHead('สิทธิ์ไม่เพียงพอ', 'บัญชีนี้ยังไม่มีสิทธิ์เข้าถึงหน้านี้') + `<div class="card">${U.empty('ยังเข้าใช้งานไม่ได้', 'ติดต่อผู้ดูแลบัญชีเพื่อขอสิทธิ์ที่เหมาะสม ในต้นแบบสามารถเปลี่ยนบทบาทจากแผงทดสอบได้', B('ออกจากระบบ', 'logout'))}</div>`; return; }
-    const meta = nav.find(n => n[0] === state.page); $('#view').innerHTML = pageHead(meta[1], meta[2]) + loading();
-    try { const data = await api.read(state.page); if (request !== state.request) return; state.data = data; draw(); $('#announcer').textContent = `โหลดหน้า ${meta[1]} แล้ว`; } catch (err) { if (request !== state.request || err.code === 'CANCELLED') return; if (authError(err)) return; $('#view').innerHTML = pageHead(meta[1], meta[2]) + `<div class="card">${U.empty(err.code === 'FORBIDDEN' ? 'ไม่มีสิทธิ์เข้าถึง' : 'โหลดข้อมูลไม่สำเร็จ', err.message, B('ลองใหม่', 'refresh', { icon: 'refresh', kind: 'primary' }))}</div>`; }
+    if (!state.user) return showLogin();
+    state.request++;
+    state.data = null;
+    const request = state.request;
+    shell();
+    if (!can(perm(state.page))) {
+      $('#view').innerHTML =
+        pageHead('สิทธิ์ไม่เพียงพอ', 'บัญชีนี้ยังไม่มีสิทธิ์เข้าถึงหน้านี้') +
+        /* HTML */ `<div class="card">
+          ${U.empty('ยังเข้าใช้งานไม่ได้', 'ติดต่อผู้ดูแลบัญชีเพื่อขอสิทธิ์ที่เหมาะสม ในต้นแบบสามารถเปลี่ยนบทบาทจากแผงทดสอบได้', B('ออกจากระบบ', 'logout'))}
+        </div>`;
+      return;
+    }
+    const meta = nav.find((n) => n[0] === state.page);
+    $('#view').innerHTML = pageHead(meta[1], meta[2]) + loading();
+    try {
+      const data = await api.read(state.page);
+      if (request !== state.request) return;
+      state.data = data;
+      draw();
+      $('#announcer').textContent = `โหลดหน้า ${meta[1]} แล้ว`;
+    } catch (err) {
+      if (request !== state.request || err.code === 'CANCELLED') return;
+      if (authError(err)) return;
+      $('#view').innerHTML =
+        pageHead(meta[1], meta[2]) +
+        /* HTML */ `<div class="card">
+          ${U.empty(err.code === 'FORBIDDEN' ? 'ไม่มีสิทธิ์เข้าถึง' : 'โหลดข้อมูลไม่สำเร็จ', err.message, B('ลองใหม่', 'refresh', { icon: 'refresh', kind: 'primary' }))}
+        </div>`;
+    }
   }
-  function draw() { const renderers = { overview: overviewView, alerts: alertsView, journeys: journeysView, codes: codesView, players: playersView, config: configView, users: usersView, logs: logsView }; $('#view').innerHTML = renderers[state.page](); bindView(); }
-  function matches(...values) { const q = state.query.trim().toLowerCase(); return !q || values.some(v => String(v ?? '').toLowerCase().includes(q)) }
-  function search(label = 'ค้นหา', placeholder = 'ค้นหา…') { return `<label class="search"><span class="sr-only">${label}</span>${I('search')}<input type="search" id="search" value="${E(state.query)}" placeholder="${placeholder}" autocomplete="off"></label>` }
-  function filter(options) { return `<label><span class="sr-only">กรองสถานะ</span><select id="filter">${options.map(([v, t]) => `<option value="${v}" ${state.filter === v ? 'selected' : ''}>${t}</option>`).join('')}</select></label>` }
-  function renderFiltered() { const focused = document.activeElement?.id, position = document.activeElement?.selectionStart; draw(); if (focused) { const el = document.getElementById(focused); el?.focus(); if (el && typeof position === 'number' && el.type === 'search') el.setSelectionRange(position, position) } }
-  function bindView() { if ($('#search')) $('#search').oninput = e => { state.query = e.target.value; renderFiltered() }; if ($('#filter')) $('#filter').onchange = e => { state.filter = e.target.value; draw() }; if ($('#range')) $('#range').onchange = e => { state.range = +e.target.value; draw() }; bindEditor(); }
+  function draw() {
+    const renderers = {
+      overview: overviewView,
+      alerts: alertsView,
+      journeys: journeysView,
+      codes: codesView,
+      players: playersView,
+      config: configView,
+      users: usersView,
+      logs: logsView,
+    };
+    $('#view').innerHTML = renderers[state.page]();
+    bindView();
+  }
+  function matches(...values) {
+    const q = state.query.trim().toLowerCase();
+    return (
+      !q ||
+      values.some((v) =>
+        String(v ?? '')
+          .toLowerCase()
+          .includes(q),
+      )
+    );
+  }
+  function search(label = 'ค้นหา', placeholder = 'ค้นหา…') {
+    return /* HTML */ `<label class="search"
+      ><span class="sr-only">${label}</span>${I('search')}<input
+        type="search"
+        id="search"
+        value="${E(state.query)}"
+        placeholder="${placeholder}"
+        autocomplete="off"
+    /></label>`;
+  }
+  function filter(options) {
+    return /* HTML */ `<label
+      ><span class="sr-only">กรองสถานะ</span
+      ><select id="filter">
+        ${options.map(([v, t]) => /* HTML */ `<option value="${v}" ${state.filter === v ? 'selected' : ''}>${t}</option>`).join('')}
+      </select></label
+    >`;
+  }
+  function renderFiltered() {
+    const focused = document.activeElement?.id,
+      position = document.activeElement?.selectionStart;
+    draw();
+    if (focused) {
+      const el = document.getElementById(focused);
+      el?.focus();
+      if (el && typeof position === 'number' && el.type === 'search')
+        el.setSelectionRange(position, position);
+    }
+  }
+  function bindView() {
+    if ($('#search'))
+      $('#search').oninput = (e) => {
+        state.query = e.target.value;
+        renderFiltered();
+      };
+    if ($('#filter'))
+      $('#filter').onchange = (e) => {
+        state.filter = e.target.value;
+        draw();
+      };
+    if ($('#range'))
+      $('#range').onchange = (e) => {
+        state.range = +e.target.value;
+        draw();
+      };
+    bindEditor();
+  }
   function chart(rows) {
-    const width=window.innerWidth<=760?Math.max(250,window.innerWidth-70):620;
-    const left=36,right=width-20,span=right-left;
-    const bins=Array.from({length:state.range},(_,i)=>{const day=17-state.range+i;return {day,count:rows.filter(r=>Number(r.at.slice(8,10))===day).length}});
-    const max=Math.max(4,...bins.map(b=>b.count));const pts=bins.map((b,i)=>[left+i*span/(bins.length-1),175-b.count/max*140]);
-    return `<svg class="chart" viewBox="0 0 ${width} 210" role="img" aria-label="จำนวน submissions รายวัน: ${bins.map(b=>`${b.day} พฤศจิกายน ${b.count} รายการ`).join(', ')}">${[0,.5,1].map(t=>`<line class="grid-line" x1="${left}" x2="${right}" y1="${175-t*140}" y2="${175-t*140}"/><text x="25" y="${179-t*140}" text-anchor="end">${Math.round(max*t)}</text>`).join('')}<path class="area" d="M${left} 175 ${pts.map(p=>`L${p.join(' ')}`).join(' ')} L${right} 175Z"/><path class="line" d="${pts.map((p,i)=>`${i?'L':'M'}${p.join(' ')}`).join(' ')}"/>${pts.map((p,i)=>`<circle cx="${p[0]}" cy="${p[1]}" r="3.5"><title>${bins[i].day} พ.ย.: ${bins[i].count} submissions</title></circle>${width>450||i%2===0||i===bins.length-1?`<text x="${p[0]}" y="200" text-anchor="middle">${bins[i].day} พ.ย.</text>`:''}`).join('')}</svg>`;
+    const width = window.innerWidth <= 760 ? Math.max(250, window.innerWidth - 70) : 620;
+    const left = 36,
+      right = width - 20,
+      span = right - left;
+    const bins = Array.from({ length: state.range }, (_, i) => {
+      const day = 17 - state.range + i;
+      return { day, count: rows.filter((r) => Number(r.at.slice(8, 10)) === day).length };
+    });
+    const max = Math.max(4, ...bins.map((b) => b.count));
+    const pts = bins.map((b, i) => [
+      left + (i * span) / (bins.length - 1),
+      175 - (b.count / max) * 140,
+    ]);
+    return /* HTML */ `<svg
+      class="chart"
+      viewBox="0 0 ${width} 210"
+      role="img"
+      aria-label="จำนวน submissions รายวัน: ${bins.map((b) => `${b.day} พฤศจิกายน ${b.count} รายการ`).join(', ')}"
+    >
+      ${[0, 0.5, 1].map((t) => /* HTML */ `<line class="grid-line" x1="${left}" x2="${right}" y1="${175 - t * 140}" y2="${175 - t * 140}" /><text x="25" y="${179 - t * 140}" text-anchor="end">${Math.round(max * t)}</text>`).join('')}
+      <path
+        class="area"
+        d="M${left} 175 ${pts.map((p) => `L${p.join(' ')}`).join(' ')} L${right} 175Z"
+      />
+      <path class="line" d="${pts.map((p, i) => `${i ? 'L' : 'M'}${p.join(' ')}`).join(' ')}" />
+      ${pts.map((p, i) => /* HTML */ `<circle cx="${p[0]}" cy="${p[1]}" r="3.5"><title>${bins[i].day} พ.ย.: ${bins[i].count} submissions</title></circle>${width > 450 || i % 2 === 0 || i === bins.length - 1 ? /* HTML */ `<text x="${p[0]}" y="200" text-anchor="middle">${bins[i].day} พ.ย.</text>` : ''}`).join('')}
+    </svg>`;
   }
   function overviewView() {
-    const d = state.data; const rows = d.submissions.filter(r => Number(r.at.slice(8, 10)) >= 17 - state.range); const totals = [['Players', d.players.length, 'ผู้เล่นทั้งหมดในชุดข้อมูล', 'people', ''], ['Quizzes', d.quizCount, 'แบบทดสอบใน Journey จำลอง', 'file', 'blue'], ['Submissions', rows.length, `รายการใน ${state.range} วันที่เลือก`, 'activity', ''], ['Unread alerts', d.unreadAlerts === null ? '—' : d.unreadAlerts, d.unreadAlerts === null ? 'จำกัดตามสิทธิ์ของบัญชี' : 'จำนวนเท่านั้น · รายละเอียดอยู่ใน Alerts', 'bell', 'amber']];
-    return pageHead('Workspace overview', 'ติดตามการใช้งานและกิจกรรมในพื้นที่ของเรา', `<label><span class="sr-only">ช่วงเวลาข้อมูล</span><select id="range"><option value="7" ${state.range === 7 ? 'selected' : ''}>10–16 พ.ย. 2026</option><option value="3" ${state.range === 3 ? 'selected' : ''}>14–16 พ.ย. 2026</option></select></label>${B('Refresh', 'refresh', { icon: 'refresh' })}`, 'YOUR WORKSPACE, AT A GLANCE') + `<div class="metrics">${totals.map(([name, value, note, ico, color]) => `<article class="card metric"><div class="metric-top">${name}<span class="metric-icon ${color}">${I(ico)}</span></div><div class="metric-value">${value}</div><div class="metric-foot">${note}</div></article>`).join('')}</div><div class="overview-charts"><section class="card"><div class="card-head"><div><h2>Activity over time</h2><p>จำนวน submissions ต่อวัน · ข้อมูลสมมติ</p></div><span class="chart-key"><i></i>Submissions</span></div><div class="chart-wrap">${rows.length ? chart(rows) : U.empty('ยังไม่มีข้อมูลกิจกรรม', 'เมื่อมีข้อมูลจะแสดงกราฟในส่วนนี้')}</div></section><section class="card"><div class="card-head"><div><h2>Journey participation</h2><p>ผู้เล่นที่เริ่มแต่ละกิจกรรม · ชุดข้อมูลทั้งหมด</p></div>${I('route')}</div><div class="journey-summary">${d.journeys.length ? d.journeys.map(j => { const count = d.players.filter(p => p.progress.some(g => g.journeyId === j.id && g.step > 0)).length; return `<div class="progress-item"><div class="row between"><span>${E(j.title)}</span><strong>${count}<span class="muted small"> / ${d.players.length}</span></strong></div><div class="progress-track" role="progressbar" aria-label="${E(j.title)}" aria-valuemin="0" aria-valuemax="${d.players.length || 1}" aria-valuenow="${count}"><span style="width:${d.players.length ? count / d.players.length * 100 : 0}%"></span></div></div>` }).join('') : U.empty('ยังไม่มี Journey', 'ไม่มีข้อมูลในสถานการณ์นี้')}<div class="progress-note">แสดงปริมาณกิจกรรม ไม่ใช่การประเมินสุขภาพจิต</div></div></section></div><div class="overview-bottom"><section class="card"><div class="card-head"><div><h2>Recent results</h2><p>รายการส่งแบบทดสอบล่าสุด</p></div>${badge(`${rows.length} รายการ`, 'blue')}</div>${rows.length ? T(['PLAYER', 'QUIZ / JOURNEY', 'RESULT', 'SUBMITTED'], rows.slice(0, 6).map(r => [`<span class="mono">${E(r.playerId)}</span>`, `<div class="cell-primary">${E(r.quiz)}</div><div class="cell-sub">${E(d.journeys.find(j => j.id === r.journeyId)?.title || '—')}</div>`, badge(r.result, r.result === 'answered' ? 'green' : 'blue'), `<span class="small muted">${date(r.at, true)}</span>`])) : U.empty('ยังไม่มีผลการทำกิจกรรม', 'ไม่พบข้อมูลในช่วงเวลานี้')}<div class="card-foot"><span>แสดงไม่เกิน 6 รายการล่าสุด</span>${can('players.read') ? B('ดูผู้เล่น', 'navigate', { extra: 'data-target="players"', kind: 'ghost small', icon: 'arrow' }) : ''}</div></section><section class="card"><div class="card-head"><div><h2>Recent activity</h2><p>เหตุการณ์กิจกรรมที่ไม่ใช่คำขอช่วยเหลือ</p></div>${I('activity')}</div>${d.events.length ? `<ul class="activity">${d.events.slice(0, 4).map(e => `<li><span class="activity-marker">${I(e.action === 'quiz.submitted' ? 'file' : 'route')}</span><div><strong>${e.action === 'quiz.submitted' ? 'ส่งแบบทดสอบ' : 'ผ่านขั้นตอนกิจกรรม'}</strong><p>${E(e.playerId)}</p><time datetime="${e.at}">${date(e.at, true)}</time></div></li>`).join('')}</ul>` : U.empty('ยังไม่มีกิจกรรม', 'รอข้อมูลจากระบบ')}</section></div><section class="card" style="margin-top:23px"><div class="card-head"><div><h2>Players</h2><p>รหัสนามแฝงและเวลาที่ใช้งาน · ไม่เพิ่มข้อมูลระบุตัวบุคคล</p></div>${can('players.read') ? B('ดูทั้งหมด', 'navigate', { extra: 'data-target="players"', kind: 'ghost small', icon: 'arrow' }) : ''}</div>${d.players.length ? T(['PLAYER', 'FIRST SEEN', 'LAST SEEN', ''], d.players.slice(0, 4).map(p => [`<span class="mono cell-primary">${E(p.id)}</span>`, date(p.firstSeen, true), date(p.lastSeen, true), can('players.read') ? B('เปิดข้อมูล', 'open-player', { id: p.id, kind: 'small' }) : '—'])) : U.empty('ยังไม่มีผู้เล่น', 'ไม่มีผู้เล่นในชุดข้อมูลนี้')}</section>`;
+    const d = state.data;
+    const rows = d.submissions.filter((r) => Number(r.at.slice(8, 10)) >= 17 - state.range);
+    const totals = [
+      ['Players', d.players.length, 'ผู้เล่นทั้งหมดในชุดข้อมูล', 'people', ''],
+      ['Quizzes', d.quizCount, 'แบบทดสอบใน Journey จำลอง', 'file', 'blue'],
+      ['Submissions', rows.length, `รายการใน ${state.range} วันที่เลือก`, 'activity', ''],
+      [
+        'Unread alerts',
+        d.unreadAlerts === null ? '—' : d.unreadAlerts,
+        d.unreadAlerts === null ? 'จำกัดตามสิทธิ์ของบัญชี' : 'จำนวนเท่านั้น · รายละเอียดอยู่ใน Alerts',
+        'bell',
+        'amber',
+      ],
+    ];
+    return (
+      pageHead(
+        'Workspace overview',
+        'ติดตามการใช้งานและกิจกรรมในพื้นที่ของเรา',
+        /* HTML */ `<label
+            ><span class="sr-only">ช่วงเวลาข้อมูล</span
+            ><select id="range">
+              <option value="7" ${state.range === 7 ? 'selected' : ''}>10–16 พ.ย. 2026</option>
+              <option value="3" ${state.range === 3 ? 'selected' : ''}>14–16 พ.ย. 2026</option>
+            </select></label
+          >${B('Refresh', 'refresh', { icon: 'refresh' })}`,
+        'YOUR WORKSPACE, AT A GLANCE',
+      ) +
+      /* HTML */ `<div class="metrics">
+          ${totals
+            .map(
+              ([name, value, note, ico, color]) =>
+                /* HTML */ `<article class="card metric">
+                  <div class="metric-top">
+                    ${name}<span class="metric-icon ${color}">${I(ico)}</span>
+                  </div>
+                  <div class="metric-value">${value}</div>
+                  <div class="metric-foot">${note}</div>
+                </article>`,
+            )
+            .join('')}
+        </div>
+        <div class="overview-charts">
+          <section class="card">
+            <div class="card-head">
+              <div>
+                <h2>Activity over time</h2>
+                <p>จำนวน submissions ต่อวัน · ข้อมูลสมมติ</p>
+              </div>
+              <span class="chart-key"><i></i>Submissions</span>
+            </div>
+            <div class="chart-wrap">
+              ${rows.length ? chart(rows) : U.empty('ยังไม่มีข้อมูลกิจกรรม', 'เมื่อมีข้อมูลจะแสดงกราฟในส่วนนี้')}
+            </div>
+          </section>
+          <section class="card">
+            <div class="card-head">
+              <div>
+                <h2>Journey participation</h2>
+                <p>ผู้เล่นที่เริ่มแต่ละกิจกรรม · ชุดข้อมูลทั้งหมด</p>
+              </div>
+              ${I('route')}
+            </div>
+            <div class="journey-summary">
+              ${
+                d.journeys.length
+                  ? d.journeys
+                      .map((j) => {
+                        const count = d.players.filter((p) =>
+                          p.progress.some((g) => g.journeyId === j.id && g.step > 0),
+                        ).length;
+                        return /* HTML */ `<div class="progress-item">
+                          <div class="row between">
+                            <span>${E(j.title)}</span
+                            ><strong
+                              >${count}<span class="muted small">
+                                / ${d.players.length}</span
+                              ></strong
+                            >
+                          </div>
+                          <div
+                            class="progress-track"
+                            role="progressbar"
+                            aria-label="${E(j.title)}"
+                            aria-valuemin="0"
+                            aria-valuemax="${d.players.length || 1}"
+                            aria-valuenow="${count}"
+                          >
+                            <span
+                              style="width:${d.players.length ? (count / d.players.length) * 100 : 0}%"
+                            ></span>
+                          </div>
+                        </div>`;
+                      })
+                      .join('')
+                  : U.empty('ยังไม่มี Journey', 'ไม่มีข้อมูลในสถานการณ์นี้')
+              }
+              <div class="progress-note">แสดงปริมาณกิจกรรม ไม่ใช่การประเมินสุขภาพจิต</div>
+            </div>
+          </section>
+        </div>
+        <div class="overview-bottom">
+          <section class="card">
+            <div class="card-head">
+              <div>
+                <h2>Recent results</h2>
+                <p>รายการส่งแบบทดสอบล่าสุด</p>
+              </div>
+              ${badge(`${rows.length} รายการ`, 'blue')}
+            </div>
+            ${
+              rows.length
+                ? T(
+                    ['PLAYER', 'QUIZ / JOURNEY', 'RESULT', 'SUBMITTED'],
+                    rows.slice(0, 6).map((r) => [
+                      /* HTML */ `<span class="mono">${E(r.playerId)}</span>`,
+                      /* HTML */ `<div class="cell-primary">${E(r.quiz)}</div>
+                        <div class="cell-sub">
+                          ${E(d.journeys.find((j) => j.id === r.journeyId)?.title || '—')}
+                        </div>`,
+                      badge(r.result, r.result === 'answered' ? 'green' : 'blue'),
+                      /* HTML */ `<span class="small muted">${date(r.at, true)}</span>`,
+                    ]),
+                  )
+                : U.empty('ยังไม่มีผลการทำกิจกรรม', 'ไม่พบข้อมูลในช่วงเวลานี้')
+            }
+            <div class="card-foot">
+              <span>แสดงไม่เกิน 6 รายการล่าสุด</span
+              >${can('players.read') ? B('ดูผู้เล่น', 'navigate', { extra: 'data-target="players"', kind: 'ghost small', icon: 'arrow' }) : ''}
+            </div>
+          </section>
+          <section class="card">
+            <div class="card-head">
+              <div>
+                <h2>Recent activity</h2>
+                <p>เหตุการณ์กิจกรรมที่ไม่ใช่คำขอช่วยเหลือ</p>
+              </div>
+              ${I('activity')}
+            </div>
+            ${
+              d.events.length
+                ? /* HTML */ `<ul class="activity">
+                    ${d.events
+                      .slice(0, 4)
+                      .map(
+                        (e) =>
+                          /* HTML */ `<li>
+                            <span class="activity-marker"
+                              >${I(e.action === 'quiz.submitted' ? 'file' : 'route')}</span
+                            >
+                            <div>
+                              <strong
+                                >${e.action === 'quiz.submitted' ? 'ส่งแบบทดสอบ' : 'ผ่านขั้นตอนกิจกรรม'}</strong
+                              >
+                              <p>${E(e.playerId)}</p>
+                              <time datetime="${e.at}">${date(e.at, true)}</time>
+                            </div>
+                          </li>`,
+                      )
+                      .join('')}
+                  </ul>`
+                : U.empty('ยังไม่มีกิจกรรม', 'รอข้อมูลจากระบบ')
+            }
+          </section>
+        </div>
+        <section class="card u-mt-23">
+          <div class="card-head">
+            <div>
+              <h2>Players</h2>
+              <p>รหัสนามแฝงและเวลาที่ใช้งาน · ไม่เพิ่มข้อมูลระบุตัวบุคคล</p>
+            </div>
+            ${can('players.read') ? B('ดูทั้งหมด', 'navigate', { extra: 'data-target="players"', kind: 'ghost small', icon: 'arrow' }) : ''}
+          </div>
+          ${
+            d.players.length
+              ? T(
+                  ['PLAYER', 'FIRST SEEN', 'LAST SEEN', ''],
+                  d.players
+                    .slice(0, 4)
+                    .map((p) => [
+                      /* HTML */ `<span class="mono cell-primary">${E(p.id)}</span>`,
+                      date(p.firstSeen, true),
+                      date(p.lastSeen, true),
+                      can('players.read')
+                        ? B('เปิดข้อมูล', 'open-player', { id: p.id, kind: 'small' })
+                        : '—',
+                    ]),
+                )
+              : U.empty('ยังไม่มีผู้เล่น', 'ไม่มีผู้เล่นในชุดข้อมูลนี้')
+          }
+        </section>`
+    );
   }
   // Management views are defined below; all actions are explicitly mock operations.
-  const management = SafeSpaceManagement({state,api,can,writable,pageHead,search,filter,matches,draw,renderRoute,mutate,go,newId});
-  const {alertsView,journeysView,codesView,playersView,configView,usersView,logsView,bindEditor,managementAction}=management;
-  function openQA() { U.modal({ title: 'แผงทดสอบ Frontend', body: `<div class="notice amber">เปลี่ยนเฉพาะสถานการณ์จำลอง ไม่เปลี่ยนสิทธิ์หรือสถานะของ Backend จริง</div>${select('ข้อมูลหน้าเว็บ', 'behavior', [{ value: 'normal', label: 'ข้อมูลปกติ' }, { value: 'empty', label: 'ข้อมูลว่าง' }, { value: 'error', label: 'โหลดล้มเหลว' }], api.behavior)}${select('บทบาทจำลอง', 'role', api.db.roles.map(r => ({ value: r.id, label: r.name })), state.user.role)}<div class="row">${B('จำลอง Session หมดอายุ', 'expire', { icon: 'clock' })}</div><p class="small muted">สิทธิ์ชุดนี้เป็นชื่อภายใน Frontend ไม่ใช่ permission keys ที่ยืนยันจาก Backend</p>`, submit: 'ใช้สถานการณ์นี้', onSubmit: async d => { api.behavior = d.get('behavior'); management.clearDrafts(); state.user = api.setRole(d.get('role')); state.editor = null; state.dirty = false; go(nav.find(n => can(perm(n[0])))?.[0] || 'overview', true) } }) }
-  async function mutate(resource, action, id, payload = {}) { try { const result = await api.mutate(resource, action, id, payload); U.toast('บันทึกในโหมดจำลองแล้ว · ไม่เปลี่ยนข้อมูลจริง'); return result } catch (error) { if (authError(error)) throw new ServiceError('CANCELLED', 'Session สิ้นสุดแล้ว'); throw error } }
+  const management = SafeSpaceManagement({
+    state,
+    api,
+    can,
+    writable,
+    pageHead,
+    search,
+    filter,
+    matches,
+    draw,
+    renderRoute,
+    mutate,
+    go,
+    newId,
+  });
+  const {
+    alertsView,
+    journeysView,
+    codesView,
+    playersView,
+    configView,
+    usersView,
+    logsView,
+    bindEditor,
+    managementAction,
+  } = management;
+  function openQA() {
+    U.modal({
+      title: 'แผงทดสอบ Frontend',
+      body: /* HTML */ `<div class="notice amber">
+          เปลี่ยนเฉพาะสถานการณ์จำลอง ไม่เปลี่ยนสิทธิ์หรือสถานะของ Backend จริง
+        </div>
+        ${select(
+          'ข้อมูลหน้าเว็บ',
+          'behavior',
+          [
+            { value: 'normal', label: 'ข้อมูลปกติ' },
+            { value: 'empty', label: 'ข้อมูลว่าง' },
+            { value: 'error', label: 'โหลดล้มเหลว' },
+          ],
+          api.behavior,
+        )}${select(
+          'บทบาทจำลอง',
+          'role',
+          api.db.roles.map((r) => ({ value: r.id, label: r.name })),
+          state.user.role,
+        )}
+        <div class="row">${B('จำลอง Session หมดอายุ', 'expire', { icon: 'clock' })}</div>
+        <p class="small muted">สิทธิ์ชุดนี้เป็นชื่อภายใน Frontend ไม่ใช่ permission keys ที่ยืนยันจาก Backend</p>`,
+      submit: 'ใช้สถานการณ์นี้',
+      onSubmit: async (d) => {
+        api.behavior = d.get('behavior');
+        management.clearDrafts();
+        state.user = api.setRole(d.get('role'));
+        state.editor = null;
+        state.dirty = false;
+        go(nav.find((n) => can(perm(n[0])))?.[0] || 'overview', true);
+      },
+    });
+  }
+  async function mutate(resource, action, id, payload = {}) {
+    try {
+      const result = await api.mutate(resource, action, id, payload);
+      U.toast('บันทึกในโหมดจำลองแล้ว · ไม่เปลี่ยนข้อมูลจริง');
+      return result;
+    } catch (error) {
+      if (authError(error)) throw new ServiceError('CANCELLED', 'Session สิ้นสุดแล้ว');
+      throw error;
+    }
+  }
   async function runAction(action, button) {
     if (action === 'theme') return toggleTheme();
-    if (action === 'fill-demo') { const f = $('#login-form'); f.elements.username.value = 'demo'; f.elements.password.value = 'demo-only'; return f.querySelector('[type=submit]').focus() }
-    if (action === 'password') { const p = $('#password'), show = p.type === 'password'; p.type = show ? 'text' : 'password'; button.setAttribute('aria-pressed', String(show)); button.setAttribute('aria-label', show ? 'ซ่อนรหัสผ่าน' : 'แสดงรหัสผ่าน'); return }
-    if (action === 'logout') { if (state.dirty) return U.confirm('ออกจากระบบ?', 'ข้อมูลที่ยังไม่บันทึกจะถูกยกเลิก', async () => logout(), { label: 'ออกจากระบบ' }); return logout() }
-    if (action === 'menu' || action === 'close-menu') return setDrawer(action==='menu'&&!$('#sidebar').classList.contains('open'));
+    if (action === 'fill-demo') {
+      const f = $('#login-form');
+      f.elements.username.value = 'demo';
+      f.elements.password.value = 'demo-only';
+      return f.querySelector('[type=submit]').focus();
+    }
+    if (action === 'password') {
+      const p = $('#password'),
+        show = p.type === 'password';
+      p.type = show ? 'text' : 'password';
+      button.setAttribute('aria-pressed', String(show));
+      button.setAttribute('aria-label', show ? 'ซ่อนรหัสผ่าน' : 'แสดงรหัสผ่าน');
+      return;
+    }
+    if (action === 'logout') {
+      if (state.dirty)
+        return U.confirm('ออกจากระบบ?', 'ข้อมูลที่ยังไม่บันทึกจะถูกยกเลิก', async () => logout(), {
+          label: 'ออกจากระบบ',
+        });
+      return logout();
+    }
+    if (action === 'menu' || action === 'close-menu')
+      return setDrawer(action === 'menu' && !$('#sidebar').classList.contains('open'));
     if (!state.user) return;
-    if (action === 'qa') { if(state.dirty)return U.toast('บันทึกหรือออกจากร่างก่อนเปลี่ยนสถานการณ์ทดสอบ'); return openQA(); } if (action === 'expire') { api.expire(); state.dirty = false; U.closeModal(true); return renderRoute() }
+    if (action === 'qa') {
+      if (state.dirty) return U.toast('บันทึกหรือออกจากร่างก่อนเปลี่ยนสถานการณ์ทดสอบ');
+      return openQA();
+    }
+    if (action === 'expire') {
+      api.expire();
+      state.dirty = false;
+      U.closeModal(true);
+      return renderRoute();
+    }
     if (action === 'navigate') return go(button.dataset.target);
-    if (action === 'refresh') { if (state.dirty) return U.confirm('โหลดข้อมูลใหม่?', 'ร่างที่ยังไม่บันทึกจะถูกยกเลิก', async () => { state.editor = null; state.dirty = false; await renderRoute() }); return renderRoute() }
-    if (action === 'open-player') { if (state.page !== 'players') { go('players'); const selected = button.dataset.id; const seq = state.request; const timer = setInterval(() => { if (seq !== state.request) { clearInterval(timer); return } if (state.data?.rows && state.page === 'players') { clearInterval(timer); state.selected = selected; draw() } }, 30); setTimeout(() => clearInterval(timer), 2000); } else { state.selected = button.dataset.id; draw() } return; }
+    if (action === 'refresh') {
+      if (state.dirty)
+        return U.confirm('โหลดข้อมูลใหม่?', 'ร่างที่ยังไม่บันทึกจะถูกยกเลิก', async () => {
+          state.editor = null;
+          state.dirty = false;
+          await renderRoute();
+        });
+      return renderRoute();
+    }
+    if (action === 'open-player') {
+      if (state.page !== 'players') {
+        go('players');
+        const selected = button.dataset.id;
+        const seq = state.request;
+        const timer = setInterval(() => {
+          if (seq !== state.request) {
+            clearInterval(timer);
+            return;
+          }
+          if (state.data?.rows && state.page === 'players') {
+            clearInterval(timer);
+            state.selected = selected;
+            draw();
+          }
+        }, 30);
+        setTimeout(() => clearInterval(timer), 2000);
+      } else {
+        state.selected = button.dataset.id;
+        draw();
+      }
+      return;
+    }
     return managementAction(action, button);
   }
-  function logout() { management.clearDrafts(); api.logout(); state.user = null; state.data = null; state.dirty = false; state.editor = null; state.selected = null; U.closeModal(true); history.replaceState(null, '', '#/login'); showLogin(); }
-  function syncDrawer(){const side=$('#sidebar'),workspace=$('.workspace');if(!side)return;const mobile=innerWidth<=760,open=side.classList.contains('open');side.inert=mobile&&!open;workspace.inert=mobile&&open;if(!mobile){side.classList.remove('open');$('.mobile-overlay')?.classList.remove('open');workspace.inert=false;}$('.mobile-menu')?.setAttribute('aria-expanded',String(mobile&&open));}
-  function setDrawer(open){const side=$('#sidebar');if(!side)return;side.classList.toggle('open',open);$('.mobile-overlay').classList.toggle('open',open);syncDrawer();if(open)side.querySelector('a,button')?.focus();else $('.mobile-menu')?.focus();}
-  document.addEventListener('keydown',e=>{const side=$('#sidebar');if(!side?.classList.contains('open')||innerWidth>760)return;if(e.key==='Escape'){e.preventDefault();setDrawer(false)}if(e.key==='Tab'){const items=[...side.querySelectorAll('a,button:not(:disabled)')],first=items[0],last=items.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}}});
-  let resizeTimer;window.addEventListener('resize',()=>{syncDrawer();clearTimeout(resizeTimer);resizeTimer=setTimeout(()=>{if(state.page==='overview'&&state.data?.submissions&&$('.chart'))$('.chart').outerHTML=chart(state.data.submissions.filter(r=>Number(r.at.slice(8,10))>=17-state.range));},100)});
-  document.addEventListener('click', e => { const navLink = e.target.closest('[data-nav]'); if (navLink) { e.preventDefault(); go(navLink.dataset.nav); return } const button = e.target.closest('[data-action]'); if (button && !button.disabled) Promise.resolve(runAction(button.dataset.action, button)).catch(err => { if (!authError(err)) U.toast(err.message) }); });
-  window.addEventListener('popstate', () => { const page = location.hash.replace('#/', ''); if (state.user) { if (state.dirty) { history.pushState(null, '', `#/${state.page}`); go(page); } else go(page, true) } });
-  window.addEventListener('beforeunload', e => { if (state.dirty) { e.preventDefault(); e.returnValue = '' } });
-  setInterval(() => { if (state.user && api.session?.expiresAt <= Date.now()) authError(new ServiceError('UNAUTHENTICATED', 'Session หมดอายุ กรุณาเข้าสู่ระบบอีกครั้ง')) }, 1000);
+  function logout() {
+    management.clearDrafts();
+    api.logout();
+    state.user = null;
+    state.data = null;
+    state.dirty = false;
+    state.editor = null;
+    state.selected = null;
+    U.closeModal(true);
+    history.replaceState(null, '', '#/login');
+    showLogin();
+  }
+  function syncDrawer() {
+    const side = $('#sidebar'),
+      workspace = $('.workspace');
+    if (!side) return;
+    const mobile = innerWidth <= 760,
+      open = side.classList.contains('open');
+    side.inert = mobile && !open;
+    workspace.inert = mobile && open;
+    if (!mobile) {
+      side.classList.remove('open');
+      $('.mobile-overlay')?.classList.remove('open');
+      workspace.inert = false;
+    }
+    $('.mobile-menu')?.setAttribute('aria-expanded', String(mobile && open));
+  }
+  function setDrawer(open) {
+    const side = $('#sidebar');
+    if (!side) return;
+    side.classList.toggle('open', open);
+    $('.mobile-overlay').classList.toggle('open', open);
+    syncDrawer();
+    if (open) side.querySelector('a,button')?.focus();
+    else $('.mobile-menu')?.focus();
+  }
+  document.addEventListener('keydown', (e) => {
+    const side = $('#sidebar');
+    if (!side?.classList.contains('open') || innerWidth > 760) return;
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      setDrawer(false);
+    }
+    if (e.key === 'Tab') {
+      const items = [...side.querySelectorAll('a,button:not(:disabled)')],
+        first = items[0],
+        last = items.at(-1);
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    }
+  });
+  let resizeTimer;
+  window.addEventListener('resize', () => {
+    syncDrawer();
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+      if (state.page === 'overview' && state.data?.submissions && $('.chart'))
+        $('.chart').outerHTML = chart(
+          state.data.submissions.filter((r) => Number(r.at.slice(8, 10)) >= 17 - state.range),
+        );
+    }, 100);
+  });
+  document.addEventListener('click', (e) => {
+    const navLink = e.target.closest('[data-nav]');
+    if (navLink) {
+      e.preventDefault();
+      go(navLink.dataset.nav);
+      return;
+    }
+    const button = e.target.closest('[data-action]');
+    if (button && !button.disabled)
+      Promise.resolve(runAction(button.dataset.action, button)).catch((err) => {
+        if (!authError(err)) U.toast(err.message);
+      });
+  });
+  window.addEventListener('popstate', () => {
+    const page = location.hash.replace('#/', '');
+    if (state.user) {
+      if (state.dirty) {
+        history.pushState(null, '', `#/${state.page}`);
+        go(page);
+      } else go(page, true);
+    }
+  });
+  window.addEventListener('beforeunload', (e) => {
+    if (state.dirty) {
+      e.preventDefault();
+      e.returnValue = '';
+    }
+  });
+  setInterval(() => {
+    if (state.user && api.session?.expiresAt <= Date.now())
+      authError(new ServiceError('UNAUTHENTICATED', 'Session หมดอายุ กรุณาเข้าสู่ระบบอีกครั้ง'));
+  }, 1000);
   showLogin();
 })();

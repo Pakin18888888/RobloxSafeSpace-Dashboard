@@ -1,19 +1,104 @@
 <!doctype html>
-<html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Sitemap & Workflows · Safe Space</title><link rel="stylesheet" href="src/styles.css"><style>.map{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:22px 0}.map a{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px;text-decoration:none}.flow-line{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:20px 0}.flow-line span{background:var(--tint);color:var(--teal);padding:12px 18px;border-radius:9px}.workflow-table{table-layout:fixed;white-space:normal;min-width:680px}.workflow-table th:first-child{width:50px}.workflow-table td{vertical-align:top;white-space:normal}.workflow-table td:nth-child(3){background:var(--blue-tint)}.workflow-table td{line-height:1.8}#all-print{display:none}@media(max-width:700px){.map{grid-template-columns:1fr 1fr}}@media print{@page{size:A4 landscape;margin:15mm}body{background:white}.no-print,#current{display:none}#all-print{display:block}.wf-print{break-before:page}.ds-main{padding:0;max-width:none}.workflow-table{min-width:0;font-size:11px}.workflow-table td{font-size:11px;padding:12px}.card{break-inside:avoid}.table-scroll{overflow:visible}}</style></head><body><main class="ds-main">
-<header class="row between no-print"><div class="row"><a class="btn" href="index.html">← Dashboard</a><a class="btn" href="flow-review.html">User flow เดิม</a><a class="btn" href="design-system.html">Design system</a></div><button class="btn" onclick="window.print()">พิมพ์ / PDF</button></header>
-<section><div class="tag" style="color:var(--teal)">PHASE 1 / FRONTEND HANDOFF</div><h1>Sitemap & system workflows</h1><p class="muted">แผนการทำงานระหว่าง Admin, Frontend, Backend API และ Database</p><div class="notice amber" style="margin-top:20px">UI และ Mock adapter มีการทำงานแล้ว ส่วน Backend/Database ในแผนนี้เป็น contract ที่ต้องยืนยัน ไม่ใช่ระบบที่ผ่านการทดสอบจริง</div></section>
-<section><h2>Sitemap / เส้นทางเข้าถึง</h2><div class="flow-line"><span>เปิดเว็บไซต์</span>→<span>Login</span>→<span>Authentication</span>→<span>ตรวจสิทธิ์</span>→<span>Overview / หน้าที่มีสิทธิ์</span></div><div class="grid-2"><div class="notice">ไม่ผ่าน Authentication → แสดงข้อความ → กลับ Login<br>Session หมดอายุ → ล้างข้อมูลหน้าเว็บ → Login</div><div class="notice">รหัสผ่านชั่วคราว → เปลี่ยนรหัส → ตรวจสิทธิ์<br>ไม่มีสิทธิ์ → Access denied → Logout</div></div><div class="map"><a href="flow-review.html#screens"><strong>Overview</strong><p class="small muted">Metrics / Chart / Results / Players / Activity</p></a><a href="flow-review.html#screens"><strong>Alerts</strong><p class="small muted">Inbox → Detail → Note / Reply / Handle</p></a><a href="flow-review.html#screens"><strong>Journeys</strong><p class="small muted">List → Editor → Steps / Dialog / Quiz → Progress</p></a><a href="flow-review.html#screens"><strong>Codes</strong><p class="small muted">List → Create / Edit → Manage</p></a><a href="flow-review.html#screens"><strong>Players</strong><p class="small muted">Search → Detail → Progress / Quiz history</p></a><a href="flow-review.html#screens"><strong>Config</strong><p class="small muted">Keys → Typed editor → Confirm</p></a><a href="flow-review.html#screens"><strong>Users & permissions</strong><p class="small muted">Staff → Edit / Manage → Role matrix</p></a><a href="flow-review.html#screens"><strong>Logs</strong><p class="small muted">Health → Requests / Events / Audit → Filter</p></a></div><div class="flow-line"><span>เมนูตามสิทธิ์</span>→<span>ดำเนินการ / ตรวจผล</span>→<span>Logout</span>→<span>Login</span></div></section>
-<section><h2>Workflow diagrams</h2><p class="small muted" style="margin:8px 0 20px">อ่านจากบนลงล่างตามลำดับขั้น ลูกศรระบุทิศทางคำขอ/คำตอบ · แผนฉบับพิมพ์รวมครบทั้ง 6 ชุด</p><div id="tabs" class="row no-print" style="margin-bottom:20px"></div><div id="current"></div><div id="all-print"></div></section>
-<section class="card padded"><h2>Boundary ที่ต้องรักษา</h2><ul><li>Frontend ทำ UI, validation เบื้องต้น และนำเสนอผลตาม response</li><li>Backend ตรวจตัวตน/สิทธิ์/ข้อมูลจริงทุก request และบันทึก audit ตามนโยบาย</li><li>Database ถูกเข้าถึงผ่าน Backend เท่านั้น; browser ไม่มี database credentials</li><li>การส่งข้อความเข้า Roblox อยู่หลัง Backend และยังต้องยืนยัน delivery contract แยกต่างหาก</li><li>Request mutation ที่ timeout ไม่ถือว่าสำเร็จหรือไม่สำเร็จอัตโนมัติ ต้องตรวจสถานะก่อน retry</li></ul><a href="docs/api-requirements.md">API Requirements →</a></section>
-</main><script>
-const workflows=[
-{title:'01 · Authentication',note:'ชื่อ auth/login, auth/me และ change-password พบในคลิป; schema/session/enforcement ยังไม่ยืนยัน',rows:[['กรอก Username / Password','ตรวจช่องกรอก → ปิด submit ซ้ำ','—','—'],['—','POST auth/login →','ตรวจบัญชี/สถานะ/รหัสผ่าน →','อ่านบัญชีตามกลไกที่มีจริง'],['—','← รับผล; เรียก auth/me ตาม contract →','ยืนยัน session และสิทธิ์ →','อ่าน role/permission ที่อนุญาต'],['หากใช้รหัสชั่วคราว: เปลี่ยนรหัส','แสดง change-password → ส่งคำขอ →','ตรวจ policy; บันทึกเมื่อถูกต้อง →','อัปเดตรหัสผ่านตามระบบจริง'],['เห็นหน้าแรกตามสิทธิ์','← ตรวจสิทธิ์จาก response; render หน้าที่อนุญาต','← ส่ง safe response; ไม่ส่ง secret','← ยืนยันผล']],error:'Login ไม่ผ่าน → ฟอร์มและข้อความทั่วไป; ไม่มีสิทธิ์ → Access denied; เปลี่ยนรหัสล้มเหลว → คงหน้าเดิม'},
-{title:'02 · Dashboard data',note:'stats/players/submissions/events พบใน request log; response fields และนิยามตัวเลขยังต้องยืนยัน',rows:[['เปิด Overview','แสดง loading → ขอข้อมูลตามสิทธิ์ →','ตรวจ session/authorization →','อ่านข้อมูลที่มีสิทธิ์'],['—','—','คำนวณ/จำกัดข้อมูลตาม contract ←','← ส่งข้อมูลกิจกรรม'],['—','← รับข้อมูล / normalize / ตรวจ shape','← ส่ง summary/results/events ที่อนุญาต','—'],['อ่าน metrics / chart / tables','render ค่าและ timestamp; กราฟใช้ dataset เดียวกับตาราง','—','—']],error:'ไม่มีข้อมูล → Empty; โหลดล้มเหลว → Error + Retry; partial/stale data ต้องระบุชัด; ไม่แสดงเนื้อหา Alerts ใน Analytics'},
-{title:'03 · Search & filter',note:'ในต้นแบบกรองข้อมูลในหน่วยความจำ; server query/pagination contract ยังรอยืนยัน',rows:[['พิมพ์คำค้น / เลือกสถานะหรือวันที่','validate ตัวกรอง; reset page/cursor →','ตรวจสิทธิ์และ query ที่รองรับ →','ค้นหาเฉพาะข้อมูลที่อนุญาต'],['เปลี่ยนคำค้นระหว่างรอ','ยกเลิก/ไม่รับผลของคำขอเก่า','ส่งผลตาม request ที่เกี่ยวข้อง ←','← ส่งข้อมูลและ pagination metadata'],['อ่านผลลัพธ์','← แสดงเฉพาะผลของคำขอล่าสุด','← response ที่กรองแล้ว','—'],['ไม่พบข้อมูล: เปลี่ยนคำค้น','Empty state + คงตัวกรองที่ใช้','—','—']],error:'Request เก่าห้ามเขียนทับผลใหม่; error ไม่แสดงว่าไม่มีข้อมูล; mock filtering ไม่ใช่หลักฐานว่า API รองรับ filter เดียวกัน'},
-{title:'04 · Create / update / delete',note:'UI มี confirmation และ mock mutation; payload/business rules/concurrency ต้องใช้ contract จริง',rows:[['สร้าง / แก้ไขรายการ','validate ฟอร์ม; เก็บ draft ในหน้าปัจจุบัน','—','—'],['ตรวจเป้าหมายและผลกระทบ','เปิด confirmation → ยกเลิกจบ / ยืนยันส่งคำขอ →','ตรวจสิทธิ์และ payload →','ตรวจข้ออ้างอิง/เวอร์ชันตามระบบ'],['—','ปิด submit ระหว่างรอ','ถ้าผ่าน → บันทึกการเปลี่ยนแปลง →','บันทึกข้อมูล + audit ตาม policy'],['—','← รับ success ที่ยืนยันได้; reload รายการ','← ส่งผลบันทึกหรือ safe error','← ยืนยันผล'],['เห็นข้อมูลใหม่ / แก้ไขข้อผิดพลาด','success เมื่อ Backend ยืนยัน; error คง draft','—','—']],error:'Validation ไม่ผ่าน → ชี้ฟิลด์; conflict → โหลดใหม่; Cancel ไม่ส่ง mutation; timeout ไม่ retry อัตโนมัติ'},
-{title:'05 · Permissions management',note:'Admin พบในคลิป; role names อื่นและ UI permission keys เป็นข้อเสนอ ไม่ใช่ server schema',rows:[['ผู้ดูแลเปิด Users','ขอ staff/role catalog →','ตรวจ Manage users and roles →','อ่านสิทธิ์ปัจจุบัน'],['เลือกบัญชีและบทบาท','แสดง permission matrix และผลกระทบ → ยืนยัน →','ตรวจสิทธิ์ผู้กระทำ/การมอบสิทธิ์/ข้อจำกัด →','ตรวจบัญชีและ role'],['—','รอผล ไม่เปลี่ยน UI เป็นสำเร็จล่วงหน้า','บันทึกบทบาท; audit; จัดการ sessions ตาม policy →','อัปเดตบทบาทที่ยืนยัน'],['เห็นบทบาทใหม่','← reload permissions และ route ที่ยังใช้ได้','← response ตามสิทธิ์ใหม่','← ยืนยันผล']],error:'ไม่มีสิทธิ์ → Forbidden; การซ่อนปุ่มไม่แทน authorization; self/last-admin/revoke policies ต้องให้ Backend ยืนยัน'},
-{title:'06 · Logout & session expiry',note:'เห็น Sign out ในคลิป แต่ยังไม่พบ logout/revoke endpoint ที่ยืนยันได้',rows:[['เลือก Logout','มี draft → เตือน; ถ้ายืนยัน → จบ session ตาม contract →','เพิกถอน/จบ session ตามวิธีที่ยืนยัน →','อัปเดต session store ถ้ามี'],['—','← ยกเลิกคำขอค้าง / ล้าง state และข้อมูลหน้าจอ','← ส่งผลการจบ session','← ยืนยันผล'],['เห็นหน้า Login','เปลี่ยนเส้นทาง; Back ต้องไม่เผยข้อมูลเก่า','—','—'],['Session หมดอายุระหว่างงาน','รับ unauthenticated → ล้างข้อมูล → Login','ตรวจ expiry ทุก request; ปฏิเสธคำขอหมดอายุ','ไม่แก้ไขข้อมูลหากไม่ผ่านสิทธิ์']],error:'ถ้าการ revoke ไม่สำเร็จ ต้องออกแบบผลลัพธ์ตาม contract; การล้าง state ฝั่ง client ไม่รับรองว่าถอน session ฝั่ง Server แล้ว'}
-];
-function markup(w){return `<article><div class="row between" style="margin:20px 0"><h2>${w.title}</h2><span class="badge amber">Backend: Not Verified</span></div><p class="small muted" style="margin-bottom:16px">${w.note}</p><div class="card"><div class="table-scroll"><table class="data-table workflow-table"><thead><tr><th>#</th><th>Admin</th><th>Frontend</th><th>Backend API</th><th>Database</th></tr></thead><tbody>${w.rows.map((r,i)=>`<tr><td>${i+1}</td>${r.map(v=>`<td>${v}</td>`).join('')}</tr>`).join('')}</tbody></table></div></div><div class="notice amber" style="margin-top:16px">${w.error}</div></article>`}
-function show(i){document.getElementById('tabs').innerHTML=workflows.map((w,j)=>`<button class="filter-tab" aria-pressed="${i===j}" data-tab="${j}">${w.title}</button>`).join('');document.getElementById('current').innerHTML=markup(workflows[i]);document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>show(+b.dataset.tab))}show(0);document.getElementById('all-print').innerHTML=workflows.map(w=>`<div class="wf-print">${markup(w)}</div>`).join('');
-</script></body></html>
+<html lang="th">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Sitemap & Workflows · Safe Space</title>
+    <link rel="stylesheet" href="src/styles.css" />
+    <link rel="stylesheet" href="src/pages/workflow.css" />
+    <link rel="stylesheet" href="src/utilities.css" />
+  </head>
+
+  <body>
+    <main class="ds-main">
+      <header class="row between no-print">
+        <div class="row">
+          <a class="btn" href="index.html">← Dashboard</a
+          ><a class="btn" href="flow-review.html">User flow เดิม</a
+          ><a class="btn" href="design-system.html">Design system</a>
+        </div>
+        <button class="btn" id="print-workflows">พิมพ์ / PDF</button>
+      </header>
+      <section>
+        <div class="tag u-text-teal">PHASE 1 / FRONTEND HANDOFF</div>
+        <h1>Sitemap & system workflows</h1>
+        <p class="muted">แผนการทำงานระหว่าง Admin, Frontend, Backend API และ Database</p>
+        <div class="notice amber u-mt-20">
+          UI และ Mock adapter มีการทำงานแล้ว ส่วน Backend/Database ในแผนนี้เป็น contract ที่ต้องยืนยัน
+          ไม่ใช่ระบบที่ผ่านการทดสอบจริง
+        </div>
+      </section>
+      <section>
+        <h2>Sitemap / เส้นทางเข้าถึง</h2>
+        <div class="flow-line">
+          <span>เปิดเว็บไซต์</span
+          >→<span>Login</span>→<span>Authentication</span>→<span>ตรวจสิทธิ์</span>→<span
+            >Overview / หน้าที่มีสิทธิ์</span
+          >
+        </div>
+        <div class="grid-2">
+          <div class="notice">
+            ไม่ผ่าน Authentication → แสดงข้อความ → กลับ Login<br />Session หมดอายุ → ล้างข้อมูลหน้าเว็บ →
+            Login
+          </div>
+          <div class="notice">
+            รหัสผ่านชั่วคราว → เปลี่ยนรหัส → ตรวจสิทธิ์<br />ไม่มีสิทธิ์ → Access denied → Logout
+          </div>
+        </div>
+        <div class="map">
+          <a href="flow-review.html#screens"
+            ><strong>Overview</strong>
+            <p class="small muted">Metrics / Chart / Results / Players / Activity</p> </a
+          ><a href="flow-review.html#screens"
+            ><strong>Alerts</strong>
+            <p class="small muted">Inbox → Detail → Note / Reply / Handle</p> </a
+          ><a href="flow-review.html#screens"
+            ><strong>Journeys</strong>
+            <p class="small muted">List → Editor → Steps / Dialog / Quiz → Progress</p> </a
+          ><a href="flow-review.html#screens"
+            ><strong>Codes</strong>
+            <p class="small muted">List → Create / Edit → Manage</p> </a
+          ><a href="flow-review.html#screens"
+            ><strong>Players</strong>
+            <p class="small muted">Search → Detail → Progress / Quiz history</p> </a
+          ><a href="flow-review.html#screens"
+            ><strong>Config</strong>
+            <p class="small muted">Keys → Typed editor → Confirm</p> </a
+          ><a href="flow-review.html#screens"
+            ><strong>Users & permissions</strong>
+            <p class="small muted">Staff → Edit / Manage → Role matrix</p> </a
+          ><a href="flow-review.html#screens"
+            ><strong>Logs</strong>
+            <p class="small muted">Health → Requests / Events / Audit → Filter</p>
+          </a>
+        </div>
+        <div class="flow-line">
+          <span>เมนูตามสิทธิ์</span>→<span>ดำเนินการ / ตรวจผล</span>→<span>Logout</span>→<span
+            >Login</span
+          >
+        </div>
+      </section>
+      <section>
+        <h2>Workflow diagrams</h2>
+        <p class="small muted u-m-8-0-20">
+          อ่านจากบนลงล่างตามลำดับขั้น ลูกศรระบุทิศทางคำขอ/คำตอบ · แผนฉบับพิมพ์รวมครบทั้ง 6 ชุด
+        </p>
+        <div id="tabs" class="row no-print u-mb-20"></div>
+        <div id="current"></div>
+        <div id="all-print"></div>
+      </section>
+      <section class="card padded">
+        <h2>Boundary ที่ต้องรักษา</h2>
+        <ul>
+          <li>Frontend ทำ UI, validation เบื้องต้น และนำเสนอผลตาม response</li>
+          <li>Backend ตรวจตัวตน/สิทธิ์/ข้อมูลจริงทุก request และบันทึก audit ตามนโยบาย</li>
+          <li>Database ถูกเข้าถึงผ่าน Backend เท่านั้น; browser ไม่มี database credentials</li>
+          <li>การส่งข้อความเข้า Roblox อยู่หลัง Backend และยังต้องยืนยัน delivery contract แยกต่างหาก</li>
+          <li>Request mutation ที่ timeout ไม่ถือว่าสำเร็จหรือไม่สำเร็จอัตโนมัติ ต้องตรวจสถานะก่อน retry</li>
+        </ul>
+        <a href="docs/api-requirements.md">API Requirements →</a>
+      </section>
+    </main>
+    <script src="src/pages/workflow.js" defer></script>
+  </body>
+</html>

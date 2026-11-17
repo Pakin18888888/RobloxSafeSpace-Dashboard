@@ -2,17 +2,17 @@
 
 เอกสารนี้อธิบายพฤติกรรม Frontend ที่ Implemented โดยใช้ Mock adapter ทั้งหมด ดูสถานะ Backend แยกใน function-inventory.md
 
-| หน้า | จุดเข้าและงานหลัก | Form / data | เงื่อนไขและการย้อนกลับ |
-|---|---|---|---|
-| Login | เปิดเว็บหรือ session หมดอายุ | Username/password; แสดง/ซ่อน; loading/error | สำเร็จตรวจสิทธิ์ เปิดหน้าแรกที่อนุญาต; temporary → เปลี่ยนรหัส; ไม่มีสิทธิ์ → denied; ข้อผิดพลาดกลับฟอร์ม |
-| Overview | overview.read | Players/Quizzes/Submissions/Unread alerts; chart; results; players; activity | ช่วงวันเปลี่ยน chart/submission count/results; metrics อื่นแสดงทั้งชุด; unread ซ่อนหากไม่มี alerts.read |
-| Alerts | alerts.read | รายการ/สถานะ, detail, team note, reply | note/reply แยก; mutation ต้อง alerts.write และ confirmation; reply แสดง mock accepted ไม่ใช่ delivered/read |
-| Journeys | journeys.read | list/details/steps/dialog/quiz/labels/CSV | journeys.write สำหรับแก้; unsaved draft เตือนก่อนออก; save ตรวจฟอร์ม/version; linked journey ปฏิเสธ delete แบบจำลอง; export ต้อง journeys.export |
-| Codes | codes.read | Journey/custom code/minutes/max uses/list | codes.write; code ซ้ำหรือ max ต่ำกว่าที่ใช้แล้วไม่บันทึก; ยืนยัน regenerate/disable/expire/delete; เปิด Edit มีตัวเลือกคง expiry เดิม |
-| Players | players.read | Search pseudonym/detail/progress/attempts/events | players.write; set step/done/reset/delete มี confirmation; Alerts แสดงเพียงจำนวน+ลิงก์หากมีสิทธิ์ ไม่ดึง narrative มาไว้ใน analytics |
-| Config | config.read | key/type/value/update | config.write; JSON/type validation; save/delete ต้องยืนยัน; ไม่สร้าง arbitrary config key ขึ้นมาเอง |
-| Users | users.read | Staff list/create/edit/manage; role creation/matrix | users.write; ไม่มีรหัสผ่านใน records/log; ป้องกันปิด/ลบบัญชีปัจจุบัน; role ที่สร้างเป็นตัวอย่างในหน่วยความจำ |
-| Logs | logs.read | Mock API/Not connected DB, metadata logs | Search/type/error filters; refresh; ไม่แสดง request body, token, password หรือ care text |
+| หน้า      | จุดเข้าและงานหลัก           | Form / data                                                                  | เงื่อนไขและการย้อนกลับ                                                                                                                        |
+| -------- | ------------------------ | ---------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| Login    | เปิดเว็บหรือ session หมดอายุ | Username/password; แสดง/ซ่อน; loading/error                                   | สำเร็จตรวจสิทธิ์ เปิดหน้าแรกที่อนุญาต; temporary → เปลี่ยนรหัส; ไม่มีสิทธิ์ → denied; ข้อผิดพลาดกลับฟอร์ม                                                      |
+| Overview | overview.read            | Players/Quizzes/Submissions/Unread alerts; chart; results; players; activity | ช่วงวันเปลี่ยน chart/submission count/results; metrics อื่นแสดงทั้งชุด; unread ซ่อนหากไม่มี alerts.read                                               |
+| Alerts   | alerts.read              | รายการ/สถานะ, detail, team note, reply                                       | note/reply แยก; mutation ต้อง alerts.write และ confirmation; reply แสดง mock accepted ไม่ใช่ delivered/read                                  |
+| Journeys | journeys.read            | list/details/steps/dialog/quiz/labels/CSV                                    | journeys.write สำหรับแก้; unsaved draft เตือนก่อนออก; save ตรวจฟอร์ม/version; linked journey ปฏิเสธ delete แบบจำลอง; export ต้อง journeys.export |
+| Codes    | codes.read               | Journey/custom code/minutes/max uses/list                                    | codes.write; code ซ้ำหรือ max ต่ำกว่าที่ใช้แล้วไม่บันทึก; ยืนยัน regenerate/disable/expire/delete; เปิด Edit มีตัวเลือกคง expiry เดิม                       |
+| Players  | players.read             | Search pseudonym/detail/progress/attempts/events                             | players.write; set step/done/reset/delete มี confirmation; Alerts แสดงเพียงจำนวน+ลิงก์หากมีสิทธิ์ ไม่ดึง narrative มาไว้ใน analytics                 |
+| Config   | config.read              | key/type/value/update                                                        | config.write; JSON/type validation; save/delete ต้องยืนยัน; ไม่สร้าง arbitrary config key ขึ้นมาเอง                                              |
+| Users    | users.read               | Staff list/create/edit/manage; role creation/matrix                          | users.write; ไม่มีรหัสผ่านใน records/log; ป้องกันปิด/ลบบัญชีปัจจุบัน; role ที่สร้างเป็นตัวอย่างในหน่วยความจำ                                                 |
+| Logs     | logs.read                | Mock API/Not connected DB, metadata logs                                     | Search/type/error filters; refresh; ไม่แสดง request body, token, password หรือ care text                                                    |
 
 ## Shared states
 
@@ -29,3 +29,13 @@
 ## รายละเอียดที่รอ Backend
 
 ทุกหน้ารอ actual API shape/permission keys/error codes/pagination ส่วน Journey รองรับเพียง schema ตัวอย่าง survey/graded กับ dialog string; scored weights, multiple dialog entity relationships, content approval/publishing ยังต้องออกแบบตาม contract จริง ไม่อ้างว่าส่งเข้าเกมแล้ว
+
+## Journey Editor / Popup v0.3
+
+Editor ใช้การ์ดฟอร์มต่อเนื่องแทนการซ่อนฟิลด์คนละแท็บ มีปุ่มไปยังข้อมูล/บทสนทนา/คำถาม เลือก step ได้โดยเก็บร่างไว้ ตัวเลือกคำตอบเป็นช่องแยกและคำตอบที่ถูกใช้ radio; เมื่อลบคำตอบที่ถูกต้องจะไม่เลือกข้ออื่นให้เอง ส่วน advanced settings พับเก็บได้ โดยยังคง mock schema เดิม
+
+คลิกพื้นหลัง Popup เทียบเท่าการยกเลิก ไม่ส่ง mutation; คลิกด้านในหรือเริ่มลากจากด้านในไม่ปิด Popup และปิดไม่ได้ขณะกำลัง submit
+
+## Journey Editor v0.4 (แทนข้อจำกัด v0.3 ด้านบน)
+
+รองรับหลาย Dialog/Quiz ต่อ Step; หลาย lines ต่อ Dialog; หลาย questions ต่อ Quiz; ตัวเลือกและคำตอบแยกตามคำถาม เพิ่ม/ลบ/เรียงลำดับด้วยปุ่มขึ้นลงได้ การลบ line/question/block ต้องยืนยัน ส่วนเกณฑ์ผ่านนับเฉพาะคำถาม Graded และยังเป็น Mock setting

@@ -1,6 +1,6 @@
 # Roblox Safe Space — Frontend Admin Dashboard
 
-Frontend v0.2 สำหรับรีวิวกับทีม · HTML / CSS / Vanilla JavaScript · Light & Dark mode
+Frontend v0.4 สำหรับรีวิวกับทีม · HTML / CSS / Vanilla JavaScript · Light & Dark mode
 
 **สถานะปัจจุบัน: UI ทำงานกับ Mock data เท่านั้น ยังไม่ได้เชื่อม Backend, Database หรือ Roblox จริง** ผู้ใช้ยืนยันให้ทำเวอร์ชันชั่วคราวก่อนขณะยังไม่มี API contract
 
@@ -20,18 +20,18 @@ npm start
 
 ## ผลงานที่เปิดดูได้
 
-| ไฟล์ | เนื้อหา |
-|---|---|
-| `index.html` | Login และ Admin Dashboard ใหม่ครบ 8 เมนู |
-| `flow-review.html` | ชุด User flow, หลักฐานจากคลิป และแบบหน้าจอจากงานก่อน เก็บไฟล์เดิมก่อนแทนหน้าหลัก |
-| `workflow.html` | Sitemap และ Workflow 6 ชุด: Authentication, Dashboard data, Search/filter, Mutation, Permissions, Logout |
-| `design-system.html` | สี ฟอนต์ ระยะห่าง Components และสถานะการโต้ตอบ พร้อมสลับ Light/Dark |
-| `docs/flows.mmd` / `docs/sitemap.mmd` / `docs/workflows.md` | แผนภาพ Mermaid ที่ทีมแก้ไขต่อได้ |
-| `docs/function-inventory.md` | การตรวจ repo, ฟังก์ชันจากคลิป/โค้ด, สถานะ และข้อขัดแย้ง |
-| `docs/api-requirements.md` | Contract และความสามารถที่ต้องได้รับก่อนเชื่อม Backend |
-| `docs/page-specs.md` | ขอบเขตและพฤติกรรมแต่ละหน้า |
-| `docs/validation.md` | ผลตรวจล่าสุดและข้อจำกัด |
-| `docs/delivery.md` | สรุปไฟล์ส่งมอบและงานที่ต้องทำเมื่อได้รับ Backend |
+| ไฟล์                                                         | เนื้อหา                                                                                                   |
+| ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| `index.html`                                                | Login และ Admin Dashboard ใหม่ครบ 8 เมนู                                                                  |
+| `flow-review.html`                                          | ชุด User flow, หลักฐานจากคลิป และแบบหน้าจอจากงานก่อน เก็บไฟล์เดิมก่อนแทนหน้าหลัก                                   |
+| `workflow.html`                                             | Sitemap และ Workflow 6 ชุด: Authentication, Dashboard data, Search/filter, Mutation, Permissions, Logout |
+| `design-system.html`                                        | สี ฟอนต์ ระยะห่าง Components และสถานะการโต้ตอบ พร้อมสลับ Light/Dark                                           |
+| `docs/flows.mmd` / `docs/sitemap.mmd` / `docs/workflows.md` | แผนภาพ Mermaid ที่ทีมแก้ไขต่อได้                                                                              |
+| `docs/function-inventory.md`                                | การตรวจ repo, ฟังก์ชันจากคลิป/โค้ด, สถานะ และข้อขัดแย้ง                                                         |
+| `docs/api-requirements.md`                                  | Contract และความสามารถที่ต้องได้รับก่อนเชื่อม Backend                                                           |
+| `docs/page-specs.md`                                        | ขอบเขตและพฤติกรรมแต่ละหน้า                                                                                 |
+| `docs/validation.md`                                        | ผลตรวจล่าสุดและข้อจำกัด                                                                                     |
+| `docs/delivery.md`                                          | สรุปไฟล์ส่งมอบและงานที่ต้องทำเมื่อได้รับ Backend                                                                  |
 
 `workflow.html` และ `flow-review.html` มีปุ่มพิมพ์/Save as PDF ผ่านเบราว์เซอร์ งานนี้ส่ง HTML ไม่ได้อ้างว่ามีไฟล์ PDF ที่ export และตรวจทุกหน้าแล้ว
 
@@ -88,6 +88,8 @@ Browser regression อยู่ที่ `tests/browser.cjs` ใช้ Playwrigh
 ```sh
 node tests/browser.cjs
 node tests/handoff.cjs
+node tests/editor.cjs
+node tests/content.cjs
 ```
 
 หาก Playwright/Chromium ไม่อยู่ใน environment ให้กำหนด `PLAYWRIGHT_MODULE_PATH` เป็น path ของโมดูล Playwright และ `BROWSER_PATH` เป็น executable ของ Chromium/Chrome/Edge ที่ใช้ทดสอบ เลือก `DASHBOARD_URL` เพื่อทดสอบ localhost แทน file URL และ `QA_OUTPUT` เพื่อบันทึกภาพ/ผลตรวจ
@@ -96,10 +98,31 @@ node tests/handoff.cjs
 
 `tests/handoff.cjs` ตรวจ Workflow/Design System, print visibility, keyboard บน mobile drawer และการยืนยันก่อนทิ้งร่างเพิ่มเติม
 
-ชุดส่งต่อ `RobloxSafeSpace-Dashboard-Preview.zip` รวม HTML, source, เอกสาร และ tests ให้แตก ZIP ทั้งโฟลเดอร์ก่อนเปิด `index.html` ไม่รวมวิดีโอ/PDF ต้นฉบับหรือข้อมูลจริง
+ชุดส่งต่อ `RobloxSafeSpace-Dashboard-v0.4.zip` รวม HTML, source, เอกสาร และ tests ให้แตก ZIP ทั้งโฟลเดอร์ก่อนเปิด `index.html` ไม่รวมวิดีโอ/PDF ต้นฉบับหรือข้อมูลจริง
 
 ## ก่อนต่อกับ Backend จริง
 
 อ่าน `docs/api-requirements.md` และ `docs/function-inventory.md` รับ OpenAPI/ตัวอย่าง sanitized data/บัญชี sandbox ก่อนเขียน mapping ตรวจ 401/403, การเพิกถอน session, concurrency และ mutation timeout กับทีมจริง โดยเฉพาะสิทธิ์ Alerts และข้อมูลส่งออก
 
 Frontend นี้เป็นงาน UI ที่พร้อมให้ทีมรีวิวและพัฒนาต่อ ยังไม่ใช่ production release ที่ผ่าน end-to-end, security review หรือ acceptance ขององค์กรแล้ว
+
+## ปรับปรุง v0.3 — 18 พฤศจิกายน 2026
+
+- Popup ปิดเมื่อคลิกพื้นหลังได้ พร้อม guard ระหว่างบันทึกและคืน keyboard focus
+- Journey Editor เป็นการ์ดฟอร์มตามลำดับ มี input ตัวเลือกและ radio คำตอบ พร้อมส่วนตั้งค่าขั้นสูงแบบพับเก็บ
+- แยก Editor เป็น `src/journey-editor.js` / `.css` และ CSS/JS ของหน้าประกอบไว้ใน `src/pages/`
+- HTML ทั้ง 4 หน้าใช้ external CSS/JavaScript; โค้ดจัดด้วย Prettier พร้อม `.editorconfig`
+- อ่าน `docs/architecture.md` สำหรับโครงสร้าง source, ลำดับโหลดไฟล์ และขอบเขตของสำเนา ZIP เดิม
+
+สำหรับผู้พัฒนาที่ต้องการจัดรูปแบบ ติดตั้ง dev dependency ด้วย `npm ci` แล้วใช้ `npm run format` หรือ `npm run format:check` การเปิดเว็บ/รัน `npm start`, `npm run check`, `npm test` ไม่ต้องใช้ Prettier
+
+## ปรับปรุง v0.4 — Journey content builder
+
+- **Add line:** บทพูดหลายรายการ พร้อมชื่อผู้พูดเฉพาะบรรทัด
+- **Add choice / Add question:** หลายคำถามต่อ Quiz แต่ละคำถามมีตัวเลือกและคำตอบของตัวเอง
+- **+ Dialog / + Quiz:** เพิ่มการ์ดหลายรายการใน Step เดียว สลับลำดับได้ด้วยปุ่มขึ้น/ลง
+- **Add step:** เพิ่ม/ลบ/เรียงขั้นตอนพร้อมเก็บเนื้อหาภายใน
+- ตั้งชื่อ NPC ที่แสดง, ชื่อ/คำอธิบาย Quiz, แสดงเฉลย และเกณฑ์ผ่าน (Mock)
+- ข้อมูลเดิมถูกแปลงเป็นรูปแบบหลายการ์ดโดยเก็บข้อความและคำถามเดิมไว้
+
+ดูรูปแบบข้อมูลชั่วคราวและข้อจำกัดใน `docs/journey-schema.md` การตั้งค่าเกณฑ์ผ่าน/เฉลยยังไม่บังคับใช้ใน Roblox จริง

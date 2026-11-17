@@ -1,0 +1,93 @@
+/* Shared presentation utilities; data-dependent chart geometry stays in the renderer. */
+.u-align-center-mb-20 {
+  text-align: center;
+  margin-bottom: 20px;
+}
+.u-bg-amber {
+  background: var(--amber);
+}
+.u-bg-blue {
+  background: var(--blue);
+}
+.u-bg-nav {
+  background: var(--nav);
+}
+.u-bg-red {
+  background: var(--red);
+}
+.u-bg-teal {
+  background: var(--teal);
+}
+.u-m-10-0 {
+  margin: 10px 0;
+}
+.u-m-18-0-10 {
+  margin: 18px 0 10px;
+}
+.u-m-20-0 {
+  margin: 20px 0;
+}
+.u-m-8-0-16 {
+  margin: 8px 0 16px;
+}
+.u-m-8-0-20 {
+  margin: 8px 0 20px;
+}
+.u-mb-12 {
+  margin-bottom: 12px;
+}
+.u-mb-14 {
+  margin-bottom: 14px;
+}
+.u-mb-16 {
+  margin-bottom: 16px;
+}
+.u-mb-20 {
+  margin-bottom: 20px;
+}
+.u-mb-22 {
+  margin-bottom: 22px;
+}
+.u-mt-10 {
+  margin-top: 10px;
+}
+.u-mt-12 {
+  margin-top: 12px;
+}
+.u-mt-14 {
+  margin-top: 14px;
+}
+.u-mt-15 {
+  margin-top: 15px;
+}
+.u-mt-16 {
+  margin-top: 16px;
+}
+.u-mt-18 {
+  margin-top: 18px;
+}
+.u-mt-20 {
+  margin-top: 20px;
+}
+.u-mt-22 {
+  margin-top: 22px;
+}
+.u-mt-23 {
+  margin-top: 23px;
+}
+.u-mt-6 {
+  margin-top: 6px;
+}
+.u-text-72cabb {
+  color: #72cabb;
+}
+.u-text-9dc9c8 {
+  color: #9dc9c8;
+}
+.u-text-teal {
+  color: var(--teal);
+}
+
+.u-mt-neg-12 {
+  margin-top: -12px;
+}

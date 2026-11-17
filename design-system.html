@@ -1,105 +1,121 @@
 <!doctype html>
 <html lang="th" data-theme="light">
-
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Design system · Safe Space</title>
-    <link rel="stylesheet" href="src/styles.css">
-</head>
+    <link rel="stylesheet" href="src/styles.css" />
+    <link rel="stylesheet" href="src/utilities.css" />
+  </head>
 
-<body>
+  <body>
     <main class="ds-main">
-        <header class="row between"><a href="index.html" class="btn">← Dashboard</a><button class="btn"
-                id="theme-toggle">Light / Dark</button></header>
-        <section>
-            <div class="tag" style="color:var(--teal)">SAFE SPACE / UI FOUNDATION</div>
-            <h1>Calm, clear, considered.</h1>
-            <p class="muted">ระบบองค์ประกอบหน้าจอสำหรับทีม Frontend · Navy / Teal / Soft White</p>
-        </section>
-        <section class="card padded">
-            <h2>Colors / Semantic tokens</h2>
-            <div class="token-grid" style="margin-top:20px">
-                <div>
-                    <div class="theme-swatch" style="background:var(--nav)"></div><code>--nav</code>
-                    <p class="small muted">Navigation</p>
-                </div>
-                <div>
-                    <div class="theme-swatch" style="background:var(--teal)"></div><code>--teal</code>
-                    <p class="small muted">Primary action</p>
-                </div>
-                <div>
-                    <div class="theme-swatch" style="background:var(--blue)"></div><code>--blue</code>
-                    <p class="small muted">Information</p>
-                </div>
-                <div>
-                    <div class="theme-swatch" style="background:var(--amber)"></div><code>--amber</code>
-                    <p class="small muted">Needs attention</p>
-                </div>
-                <div>
-                    <div class="theme-swatch" style="background:var(--red)"></div><code>--red</code>
-                    <p class="small muted">Destructive / error</p>
-                </div>
-            </div>
-        </section>
-        <section class="grid-2">
-            <article class="card padded">
-                <h2>Typography</h2>
-                <h1 style="margin:18px 0 10px">Workspace overview</h1>
-                <h2>หัวข้อส่วน · Section title</h2>
-                <p style="margin-top:15px">เนื้อหาที่อ่านง่ายทั้งภาษาไทยและอังกฤษ ใช้ Segoe UI, Leelawadee UI และ Tahoma
-                    ตามฟอนต์ที่มีในเครื่อง</p>
-                <p class="small muted">Heading 29/18/15 px · Body 14 px · Supporting text 12
-                    px<br>ไม่มีการโหลดฟอนต์จากบริการภายนอก</p>
-            </article>
-            <article class="card padded">
-                <h2>Spacing & shape</h2>
-                <ul>
-                    <li>Spacing: 4 / 8 / 12 / 16 / 24 / 32 px</li>
-                    <li>Card radius: 16 px · Input: 8 px</li>
-                    <li>Desktop sidebar: 234 px</li>
-                    <li>Mobile navigation: drawer ที่ ≤ 760 px</li>
-                    <li>Focus: 3 px outline และ offset 3 px</li>
-                </ul>
-                <div class="notice">ใช้สีคู่กับข้อความหรือสัญลักษณ์เสมอ ไม่สื่อความหมายด้วยสีอย่างเดียว</div>
-            </article>
-        </section>
-        <section class="card padded">
-            <h2>Actions & statuses</h2>
-            <div class="row" style="margin:20px 0"><button class="btn primary">Primary action</button><button
-                    class="btn">Secondary</button><button class="btn ghost">Quiet action</button><button
-                    class="btn danger">Delete</button><button class="btn" disabled>Unavailable</button></div>
-            <div class="row"><span class="badge green">Active</span><span class="badge blue">In review</span><span
-                    class="badge amber">Needs attention</span><span class="badge red">Error</span><span
-                    class="badge">Draft</span></div>
-            <p class="small muted" style="margin-top:16px">ปุ่มในหน้านี้เป็นตัวอย่าง component ให้ลอง focus/hover
-                ไม่มีผลต่อข้อมูล</p>
-        </section>
-        <section class="card padded">
-            <h2>Forms & feedback</h2>
-            <div class="form-grid" style="margin-top:20px"><label class="field">Text field<input
-                        placeholder="กรอกข้อความตัวอย่าง"></label><label class="field">Select<select>
-                        <option>ตัวเลือกตัวอย่าง</option>
-                        <option>ตัวเลือกที่สอง</option>
-                    </select></label><label class="field full-row">Textarea<textarea
-                        placeholder="รายละเอียด…"></textarea></label></div>
-            <div class="notice teal" style="margin-top:20px">บันทึกในโหมดจำลองแล้ว</div>
-            <div class="form-error" style="margin-top:12px">กรุณาตรวจข้อมูลในช่องที่ระบุ ก่อนบันทึกอีกครั้ง</div>
-        </section>
-        <section class="card padded">
-            <h2>Interaction contract</h2>
-            <ul>
-                <li>Loading: ปิด submit ซ้ำและแสดงสถานะรอ</li>
-                <li>Empty: แยกไม่มีข้อมูลจากโหลดล้มเหลว</li>
-                <li>Error: แจ้งข้อความที่เข้าใจได้ พร้อมลองใหม่</li>
-                <li>Destructive: ระบุเป้าหมายและผลกระทบก่อนยืนยัน</li>
-                <li>Dialog: native &lt;dialog&gt;, keyboard focus, Escape และ focus restoration</li>
-                <li>Permissions: แสดงเฉพาะข้อมูล/การกระทำที่ได้รับสิทธิ์ แต่ Server ต้องบังคับใช้จริง</li>
-                <li>Reduced motion: ปิด animation/transition ตามการตั้งค่าอุปกรณ์</li>
-            </ul>
-        </section>
+      <header class="row between">
+        <a href="index.html" class="btn">← Dashboard</a
+        ><button class="btn" id="theme-toggle">Light / Dark</button>
+      </header>
+      <section>
+        <div class="tag u-text-teal">SAFE SPACE / UI FOUNDATION</div>
+        <h1>Calm, clear, considered.</h1>
+        <p class="muted">ระบบองค์ประกอบหน้าจอสำหรับทีม Frontend · Navy / Teal / Soft White</p>
+      </section>
+      <section class="card padded">
+        <h2>Colors / Semantic tokens</h2>
+        <div class="token-grid u-mt-20">
+          <div>
+            <div class="theme-swatch u-bg-nav"></div>
+            <code>--nav</code>
+            <p class="small muted">Navigation</p>
+          </div>
+          <div>
+            <div class="theme-swatch u-bg-teal"></div>
+            <code>--teal</code>
+            <p class="small muted">Primary action</p>
+          </div>
+          <div>
+            <div class="theme-swatch u-bg-blue"></div>
+            <code>--blue</code>
+            <p class="small muted">Information</p>
+          </div>
+          <div>
+            <div class="theme-swatch u-bg-amber"></div>
+            <code>--amber</code>
+            <p class="small muted">Needs attention</p>
+          </div>
+          <div>
+            <div class="theme-swatch u-bg-red"></div>
+            <code>--red</code>
+            <p class="small muted">Destructive / error</p>
+          </div>
+        </div>
+      </section>
+      <section class="grid-2">
+        <article class="card padded">
+          <h2>Typography</h2>
+          <h1 class="u-m-18-0-10">Workspace overview</h1>
+          <h2>หัวข้อส่วน · Section title</h2>
+          <p class="u-mt-15">
+            เนื้อหาที่อ่านง่ายทั้งภาษาไทยและอังกฤษ ใช้ Segoe UI, Leelawadee UI และ Tahoma ตามฟอนต์ที่มีในเครื่อง
+          </p>
+          <p class="small muted">
+            Heading 29/18/15 px · Body 14 px · Supporting text 12 px<br />ไม่มีการโหลดฟอนต์จากบริการภายนอก
+          </p>
+        </article>
+        <article class="card padded">
+          <h2>Spacing & shape</h2>
+          <ul>
+            <li>Spacing: 4 / 8 / 12 / 16 / 24 / 32 px</li>
+            <li>Card radius: 16 px · Input: 8 px</li>
+            <li>Desktop sidebar: 234 px</li>
+            <li>Mobile navigation: drawer ที่ ≤ 760 px</li>
+            <li>Focus: 3 px outline และ offset 3 px</li>
+          </ul>
+          <div class="notice">ใช้สีคู่กับข้อความหรือสัญลักษณ์เสมอ ไม่สื่อความหมายด้วยสีอย่างเดียว</div>
+        </article>
+      </section>
+      <section class="card padded">
+        <h2>Actions & statuses</h2>
+        <div class="row u-m-20-0">
+          <button class="btn primary">Primary action</button><button class="btn">Secondary</button
+          ><button class="btn ghost">Quiet action</button><button class="btn danger">Delete</button
+          ><button class="btn" disabled>Unavailable</button>
+        </div>
+        <div class="row">
+          <span class="badge green">Active</span><span class="badge blue">In review</span
+          ><span class="badge amber">Needs attention</span><span class="badge red">Error</span
+          ><span class="badge">Draft</span>
+        </div>
+        <p class="small muted u-mt-16">ปุ่มในหน้านี้เป็นตัวอย่าง component ให้ลอง focus/hover ไม่มีผลต่อข้อมูล</p>
+      </section>
+      <section class="card padded">
+        <h2>Forms & feedback</h2>
+        <div class="form-grid u-mt-20">
+          <label class="field">Text field<input placeholder="กรอกข้อความตัวอย่าง" /></label
+          ><label class="field"
+            >Select<select>
+              <option>ตัวเลือกตัวอย่าง</option>
+              <option>ตัวเลือกที่สอง</option>
+            </select></label
+          ><label class="field full-row"
+            >Textarea<textarea placeholder="รายละเอียด…"></textarea>
+          </label>
+        </div>
+        <div class="notice teal u-mt-20">บันทึกในโหมดจำลองแล้ว</div>
+        <div class="form-error u-mt-12">กรุณาตรวจข้อมูลในช่องที่ระบุ ก่อนบันทึกอีกครั้ง</div>
+      </section>
+      <section class="card padded">
+        <h2>Interaction contract</h2>
+        <ul>
+          <li>Loading: ปิด submit ซ้ำและแสดงสถานะรอ</li>
+          <li>Empty: แยกไม่มีข้อมูลจากโหลดล้มเหลว</li>
+          <li>Error: แจ้งข้อความที่เข้าใจได้ พร้อมลองใหม่</li>
+          <li>Destructive: ระบุเป้าหมายและผลกระทบก่อนยืนยัน</li>
+          <li>Dialog: native &lt;dialog&gt;, keyboard focus, Escape และ focus restoration</li>
+          <li>Permissions: แสดงเฉพาะข้อมูล/การกระทำที่ได้รับสิทธิ์ แต่ Server ต้องบังคับใช้จริง</li>
+          <li>Reduced motion: ปิด animation/transition ตามการตั้งค่าอุปกรณ์</li>
+        </ul>
+      </section>
     </main>
-    <script>document.getElementById('theme-toggle').onclick = () => { document.documentElement.dataset.theme = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark' };</script>
-</body>
-
+    <script src="src/pages/design-system.js" defer></script>
+  </body>
 </html>

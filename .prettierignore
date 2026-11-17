@@ -1,0 +1,6 @@
+node_modules/
+tmp/
+*.zip
+RobloxSafeSpace-Dashboard-Preview/
+package-lock.json
+*.mmd
