@@ -1,0 +1,25 @@
+%% Proposed integration, not proof of backend implementation
+sequenceDiagram
+    actor Staff as เจ้าหน้าที่
+    participant FE as Web Frontend
+    participant BE as Backend
+    participant Data as ข้อมูล / ระบบเกม
+    Staff->>FE: เปิด Dashboard / กรอก Login
+    FE->>BE: auth/login แล้ว auth/me ตาม contract
+    BE-->>FE: ยืนยันตัวตน / สิทธิ์ / สถานะรหัสผ่าน (schema รอยืนยัน)
+    alt ไม่มีสิทธิ์ / session ไม่ถูกต้อง
+        FE-->>Staff: Login หรือหน้าสิทธิ์ไม่เพียงพอ
+    else มีสิทธิ์
+        FE->>BE: ขอข้อมูลหน้าที่เปิด
+        BE->>Data: อ่านข้อมูลที่สิทธิ์อนุญาต
+        Data-->>BE: ข้อมูล
+        BE-->>FE: response ที่ผ่านการจำกัดข้อมูล
+        FE-->>Staff: แสดงข้อมูล / empty / error
+    end
+    Staff->>FE: บันทึกโน้ต หรือ ตอบผู้เล่น (แยกคำสั่ง)
+    FE->>BE: ตรวจฟอร์ม → ส่ง request ที่มีสิทธิ์
+    BE->>Data: ตรวจสิทธิ์ / บันทึก / ส่งข้อความตามระบบจริง
+    Data-->>BE: ผลตาม contract (delivery ยังต้องยืนยัน)
+    BE-->>FE: ยืนยันผล / ข้อผิดพลาด
+    FE-->>Staff: สถานะตามหลักฐานตอบกลับ และ reload
+    Note over FE,BE: timeout ที่ไม่รู้ผล: ตรวจรายการก่อน retry mutation

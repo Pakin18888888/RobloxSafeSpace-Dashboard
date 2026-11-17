@@ -1,0 +1,12 @@
+{
+  "name": "roblox-safe-space-dashboard",
+  "version": "0.2.0",
+  "private": true,
+  "description": "Frontend-only admin dashboard with an explicit in-memory mock adapter",
+  "scripts": {
+    "start": "node scripts/serve.cjs",
+    "test": "node --test tests/service.test.cjs",
+    "check": "node --check src/fixtures.js && node --check src/service.js && node --check src/ui.js && node --check src/management.js && node --check src/app.js"
+  },
+  "engines": { "node": ">=18" }
+}

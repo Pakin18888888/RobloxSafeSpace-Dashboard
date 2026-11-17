@@ -1,0 +1,27 @@
+flowchart TD
+    Website[เปิดเว็บไซต์] --> Login[Login]
+    Login --> Auth{Authentication}
+    Auth -->|ไม่ผ่าน| LoginError[ข้อความทั่วไปและลองใหม่]
+    LoginError --> Login
+    Auth -->|ผ่าน| Temporary{รหัสผ่านชั่วคราว?}
+    Temporary -->|ใช่| Change[Change password - proposed]
+    Change --> Permissions
+    Temporary -->|ไม่ใช่| Permissions{ตรวจสิทธิ์}
+    Permissions -->|ไม่มีสิทธิ์| Forbidden[Access denied]
+    Permissions -->|มี Overview| Overview[Overview]
+    Permissions -->|มีสิทธิ์อื่น| First[หน้าแรกตามสิทธิ์]
+    Overview --> Navigation[Sidebar ตามสิทธิ์]
+    First --> Navigation
+    Navigation --> Alerts[Alerts: inbox + detail]
+    Navigation --> Journeys[Journeys: list + editor + progress]
+    Navigation --> Codes[Codes: list + create/edit + manage]
+    Navigation --> Players[Players: list + detail]
+    Navigation --> Config[Config: list + typed editor]
+    Navigation --> Users[Users: staff + roles + matrix]
+    Navigation --> Logs[Logs: health + requests/events/audit]
+    Journeys --> Details[Details / Dialog / Quiz / Steps]
+    Navigation --> Logout[Logout]
+    Navigation --> Expired[Session expired]
+    Logout --> Login
+    Expired --> Login
+    Forbidden --> Logout
