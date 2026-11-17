@@ -45,12 +45,13 @@ window.SafeSpaceJourneyContent = function ({ state, writable, draw, dirty }) {
         </div>
         ${controls('block', bi, step.blocks.length, readOnly, 0)}
       </div>
+      ${!readOnly ? SafeSpaceJourneyTools.cardTools(step.blocks.length) : ''}
       ${field('ชื่อการ์ด', 'blockTitle', block.title, 'text', `data-block-edit="title" maxlength="120" ${off}`)}
       ${
         block.type === 'dialog'
           ? `
         ${field('ชื่อ NPC ที่แสดงเหนือข้อความ', 'npcName', block.npcName, 'text', `data-block-edit="npcName" maxlength="120" ${off}`)}
-        ${block.lines.map((l, li) => `<section class="dialog-line" data-line="${li}"><div class="row between"><h3 tabindex="-1">บทพูด ${li + 1} / ${block.lines.length}</h3>${controls('line', li, block.lines.length, readOnly)}</div>${textarea('ตัวละครพูดว่าอะไร?', 'lineText', l.text, `data-line-edit="text" rows="3" maxlength="3000" ${off}`)}${field('ชื่อผู้พูดเฉพาะบทนี้ (ไม่บังคับ)', 'speaker', l.speaker, 'text', `data-line-edit="speaker" maxlength="120" placeholder="เว้นว่างเพื่อใช้ชื่อ NPC ด้านบน" ${off}`)}</section>`).join('')}
+        ${block.lines.map((l, li) => `<section class="dialog-line" data-line="${li}"><div class="row between"><h3 tabindex="-1">บทพูด ${li + 1} / ${block.lines.length}</h3>${controls('line', li, block.lines.length, readOnly)}</div>${SafeSpaceJourneyTools.lineField(l, readOnly)}${field('ชื่อผู้พูดเฉพาะบทนี้ (ไม่บังคับ)', 'speaker', l.speaker, 'text', `data-line-edit="speaker" maxlength="120" placeholder="เว้นว่างเพื่อใช้ชื่อ NPC ด้านบน" ${off}`)}</section>`).join('')}
         ${!readOnly ? B('เพิ่มบทพูด', 'add-line', { icon: 'plus', kind: 'ghost small', disabled: block.lines.length >= 50 }) : ''}
       `
           : `
@@ -131,6 +132,7 @@ window.SafeSpaceJourneyContent = function ({ state, writable, draw, dirty }) {
     ]) {
       const selector = '[data-' + attribute.replace(/[A-Z]/g, (c) => '-' + c.toLowerCase()) + ']';
       document.querySelectorAll(selector).forEach((el) => {
+        if (el.isContentEditable) return;
         el.oninput = () => {
           locate(el)[part][el.dataset[attribute]] = el.type === 'checkbox' ? el.checked : el.value;
           dirty();
@@ -160,7 +162,7 @@ window.SafeSpaceJourneyContent = function ({ state, writable, draw, dirty }) {
   }
   function action(name, button) {
     if (
-      !/^(add-(dialog|quiz|line|question|choice)|remove-(block|line|question|choice)|move-(block|line|question))$/.test(
+      !/^(insert-(dialog|quiz)|duplicate-block|add-(dialog|quiz|line|question|choice)|remove-(block|line|question|choice)|move-(block|line|question))$/.test(
         name,
       )
     )
@@ -168,6 +170,18 @@ window.SafeSpaceJourneyContent = function ({ state, writable, draw, dirty }) {
     if (!state.editor || !writable('journeys')) return true;
     const { step, bi, block, qi, li, question } = locate(button);
     let selector = '#journey-content h2';
+    if (name.startsWith('insert-') || name === 'duplicate-block') {
+      if (!block || step.blocks.length >= 30) return true;
+      const item =
+        name === 'duplicate-block'
+          ? structuredClone(block)
+          : name === 'insert-dialog'
+            ? M.dialog()
+            : M.quiz();
+      step.blocks.splice(bi + 1, 0, item);
+      repaint(`[data-block="${bi + 1}"] [data-block-edit=title]`);
+      return true;
+    }
     if (name === 'add-dialog' || name === 'add-quiz') {
       if (step.blocks.length >= 30) return true;
       step.blocks.push(name === 'add-dialog' ? M.dialog() : M.quiz());
@@ -177,7 +191,7 @@ window.SafeSpaceJourneyContent = function ({ state, writable, draw, dirty }) {
     if (!block) return true;
     if (name === 'add-line' && block.lines?.length < 50) {
       block.lines.push(M.line());
-      selector = `[data-block="${bi}"] [data-line="${block.lines.length - 1}"] textarea`;
+      selector = `[data-block="${bi}"] [data-line="${block.lines.length - 1}"] [data-line-edit=text]`;
     }
     if (name === 'add-question' && block.questions?.length < 30) {
       block.questions.push(M.question());

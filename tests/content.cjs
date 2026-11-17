@@ -34,7 +34,7 @@ const { chromium } = require(process.env.PLAYWRIGHT_MODULE_PATH || 'playwright')
     await block(0).locator('[data-line="1"] [data-line-edit=speaker]').fill('ผู้ช่วย');
     await block(0).locator('[data-line="1"] [data-action=move-line][data-direction="-1"]').click();
     assert.equal(
-      await block(0).locator('[data-line="0"] [data-line-edit=text]').inputValue(),
+      await block(0).locator('[data-line="0"] [data-line-edit=text]').innerText(),
       'บทพูดที่สอง',
     );
     await block(1).locator('[data-block-edit=mode]').selectOption('graded');
@@ -121,6 +121,32 @@ const { chromium } = require(process.env.PLAYWRIGHT_MODULE_PATH || 'playwright')
     await p.locator('[data-action=edit-journey][data-id=j1]').click();
     await p.locator('[data-action=select-step][data-index="2"]').click();
     assert.equal(await p.locator('[data-step-edit=npc]').inputValue(), 'extra_npc');
+    const pills = p.locator('.step-pills button');
+    await pills.nth(2).dragTo(pills.first());
+    assert.equal(await pills.first().getAttribute('aria-pressed'), 'true');
+    assert.equal(await p.locator('[data-step-edit=npc]').inputValue(), 'extra_npc');
+    const speech = block(0).locator('.rich-dialog').first();
+    await speech.fill('ทดสอบรูปแบบ');
+    await speech.press('Control+a');
+    await block(0).locator('[data-format=bold]').first().click();
+    assert.equal(await speech.locator('b, strong').innerText(), 'ทดสอบรูปแบบ');
+    await act('duplicate-block', block(0)).click();
+    assert.equal(await block(1).locator('.rich-dialog b, .rich-dialog strong').innerText(), 'ทดสอบรูปแบบ');
+    await block(1).locator('[data-block-edit=title]').fill('สำเนาบทสนทนา');
+    await block(1).locator('.card-grip').dragTo(block(0).locator('h2'));
+    assert.equal(await block(0).locator('[data-block-edit=title]').inputValue(), 'สำเนาบทสนทนา');
+    await act('insert-quiz', block(0)).click();
+    assert.equal(await block(1).getAttribute('data-kind'), 'quiz');
+    await act('duplicate-block', block(1)).click();
+    assert.equal(await block(2).getAttribute('data-kind'), 'quiz');
+    for (const index of [2, 1]) {
+      await act('remove-block', block(index)).click();
+      await confirm();
+    }
+    await save();
+    await act('exit-editor').click();
+    await p.locator('[data-action=edit-journey][data-id=j1]').click();
+    assert.equal(await block(0).locator('.rich-dialog b, .rich-dialog strong').innerText(), 'ทดสอบรูปแบบ');
     assert.deepEqual(errors, []);
     const result = {
       passed: true,

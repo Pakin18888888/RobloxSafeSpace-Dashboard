@@ -86,7 +86,9 @@ window.SafeSpaceJourneyEditor = function (ctx) {
           <div class="step-pills">
             ${j.steps.map((s, i) => /* HTML */ `<button type="button" data-action="select-step" data-index="${i}" aria-pressed="${i === state.step}"><span>${i + 1}</span>${E(s.name || 'ขั้นตอนใหม่')}</button>`).join('')}
           </div>
-          <p class="field-hint">เลือกขั้นตอนเพื่อแก้บทสนทนาและคำถามด้านล่าง ข้อมูลร่างจะอยู่ครบเมื่อสลับขั้นตอน</p>
+          <p class="field-hint">
+            ${readOnly ? 'เลือกขั้นตอนเพื่อดูเนื้อหา' : 'คลิกเพื่อแก้ไข หรือลากขั้นตอนไปวางบนขั้นตอนอื่นเพื่อเปลี่ยนลำดับการเล่น'}
+          </p>
         </section>
 
         ${step ? content.render(step, readOnly) : ''}
@@ -125,7 +127,9 @@ window.SafeSpaceJourneyEditor = function (ctx) {
   }
 
   function bind() {
-    if (!state.editor || !writable('journeys')) return;
+    if (!state.editor) return;
+    SafeSpaceJourneyTools.bind({ state, dirty, draw, readOnly: !writable('journeys') });
+    if (!writable('journeys')) return;
     const j = state.editor;
     const step = j.steps[state.step];
     document.querySelectorAll('[data-edit]').forEach((el) => {

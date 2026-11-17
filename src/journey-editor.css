@@ -289,3 +289,124 @@ body:has(.journey-form) #toast {
     gap: 8px;
   }
 }
+
+.step-pills button[draggable],
+.card-grip {
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+.sort-target {
+  outline: 3px dashed var(--teal);
+  outline-offset: -3px;
+}
+.content-block:has(.card-grip) {
+  position: relative;
+  padding-top: 36px;
+  overflow: visible;
+}
+.card-grip {
+  position: absolute;
+  top: 2px;
+  left: calc(50% - 24px);
+  width: 48px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 21px;
+}
+.card-rail,
+.format-bar {
+  display: flex;
+  gap: 3px;
+}
+.card-rail {
+  display: none;
+  position: absolute;
+  top: 0;
+  left: calc(100% + 8px);
+  flex-direction: column;
+  padding: 4px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: 10px;
+}
+.editing-card > .card-rail {
+  display: flex;
+}
+.journey-form:has(.card-rail) {
+  padding-right: 72px;
+}
+.card-rail button,
+.format-bar button {
+  background: transparent;
+  border: 0;
+  color: var(--text);
+  border-radius: 6px;
+  padding: 6px;
+  font: inherit;
+  cursor: pointer;
+}
+.card-rail button {
+  display: grid;
+  justify-items: center;
+  font-size: 11px;
+  min-width: 48px;
+}
+.card-rail b {
+  font-size: 18px;
+}
+.card-rail button:hover,
+.format-bar button:hover {
+  background: var(--tint);
+  color: var(--teal);
+}
+.dialog-composer {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-2);
+}
+.dialog-composer:focus-within {
+  outline: 2px solid var(--teal);
+}
+.format-bar {
+  flex-wrap: wrap;
+  padding: 4px;
+  border-bottom: 1px solid var(--border);
+}
+.format-bar button {
+  min-width: 32px;
+}
+[data-format='bold'] {
+  font-weight: bold !important;
+}
+[data-format='italic'] {
+  font-style: italic !important;
+}
+[data-format='underline'] {
+  text-decoration: underline;
+}
+.rich-dialog {
+  padding: 12px;
+  min-height: 72px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-weight: normal;
+}
+.rich-dialog :is(ul, ol) {
+  padding-inline-start: 1.7em;
+}
+@media (max-width: 740px) {
+  .journey-form:has(.card-rail) {
+    padding-right: 0;
+  }
+  .card-rail {
+    position: static;
+    flex-direction: row;
+    width: fit-content;
+  }
+  .card-rail button {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+  }
+}
