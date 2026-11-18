@@ -412,7 +412,8 @@ body:has(.journey-form) #toast {
 }
 .content-workspace {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 82px;
+  grid-template-columns: minmax(0, 1fr);
+  padding-right: 72px;
   gap: 12px;
   align-items: start;
 }
@@ -422,8 +423,10 @@ body:has(.journey-form) #toast {
   min-width: 0;
 }
 .builder-sidebar {
-  position: sticky;
-  top: 24px;
+  position: absolute;
+  top: 0;
+  left: calc(100% + 10px);
+  width: 62px;
   display: grid;
   gap: 8px;
   padding: 8px;
@@ -434,6 +437,11 @@ body:has(.journey-form) #toast {
 .builder-sidebar .btn {
   padding: 10px 4px;
   font-size: 12px;
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  border: 0;
+  background: transparent;
 }
 .required-mark {
   color: #ef5c68;
@@ -447,8 +455,13 @@ body:has(.journey-form) #toast {
   .content-workspace {
     grid-template-columns: minmax(0, 1fr);
   }
+  .content-workspace {
+    padding-right: 0;
+  }
   .builder-sidebar {
-    grid-row: 1;
+    position: static;
+    width: fit-content;
+    grid-row: auto;
     top: 8px;
     z-index: 5;
     grid-template-columns: 1fr 1fr;
@@ -495,3 +508,13 @@ body:has(.journey-form) #toast {
     transition: none;
   }
 }
+
+#journey-content {
+  position: relative;
+  overflow: visible;
+}
+.builder-sidebar .btn span {
+  font-size: 22px;
+  line-height: 1;
+}
+.builder-sidebar .btn::before { content: "+"; font-size: 24px; line-height: 1; }

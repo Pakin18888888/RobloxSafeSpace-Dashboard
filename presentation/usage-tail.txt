@@ -1,0 +1,10 @@
+for (const [i, slide] of deck.slides.items.entries()) {
+  const png = await deck.export({ slide, format: 'png', scale: 1 });
+  await fs.writeFile(
+    path.join(out, `slide-${String(i + 1).padStart(2, '0')}.png`),
+    new Uint8Array(await png.arrayBuffer()),
+  );
+}
+const draft = path.join(out, 'candidate.pptx');
+await (await PresentationFile.exportPptx(deck)).save(draft);
+console.log(JSON.stringify({ draft, slideCount: deck.slides.items.length, renderDir: out }));

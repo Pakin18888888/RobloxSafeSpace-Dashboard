@@ -189,8 +189,9 @@ window.SafeSpaceJourneyContent = function ({ state, writable, draw, dirty }) {
     }
     if (name === 'add-dialog' || name === 'add-quiz') {
       if (step.blocks.length >= 30) return true;
-      step.blocks.push(name === 'add-dialog' ? M.dialog() : M.quiz());
-      repaint(`[data-block="${step.blocks.length - 1}"] [data-block-edit=title]`);
+      const next = block ? bi + 1 : step.blocks.length;
+      step.blocks.splice(next, 0, name === 'add-dialog' ? M.dialog() : M.quiz());
+      repaint(`[data-block="${next}"] [data-block-edit=title]`);
       return true;
     }
     if (!block) return true;

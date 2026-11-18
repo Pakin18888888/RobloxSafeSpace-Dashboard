@@ -246,7 +246,10 @@ window.SafeSpaceJourneyTools = (() => {
       (item) => item.querySelector('.card-grip'),
       (from, to) => reorder(step.blocks, from, to, '[data-block="' + to + '"] h2'),
     );
+    const sidebar = document.querySelector('.builder-sidebar');
     function activate(card) {
+      const host = card || document.querySelector('#journey-content');
+      if (sidebar && sidebar.parentElement !== host) host.append(sidebar);
       cards.forEach((item) => item.classList.toggle('editing-card', item === card));
     }
     cards.forEach((card, index) => {

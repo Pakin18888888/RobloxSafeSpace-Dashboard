@@ -114,7 +114,7 @@ window.SafeSpaceJourneyEditor = function (ctx) {
 
         <div class="content-workspace">
           <div>${step ? content.render(step, readOnly) : ''}</div>
-          ${!readOnly ? `<aside class="builder-sidebar" aria-label="เพิ่มเนื้อหา">${B('＋ Dialog', 'add-dialog', { disabled: step.blocks.length >= 30 })}${B('＋ Quiz', 'add-quiz', { disabled: step.blocks.length >= 30 })}</aside>` : ''}
+          ${!readOnly ? `<aside class="builder-sidebar" aria-label="เพิ่มเนื้อหา">${B('Dialog', 'add-dialog', { disabled: step.blocks.length >= 30 })}${B('Quiz', 'add-quiz', { disabled: step.blocks.length >= 30 })}</aside>` : ''}
         </div>
 
         <div class="editor-save-bar">
@@ -186,3 +186,4 @@ window.SafeSpaceJourneyEditor = function (ctx) {
 
   return { render, bind, action, focusSection };
 };
+
