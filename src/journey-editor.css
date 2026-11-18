@@ -413,7 +413,7 @@ body:has(.journey-form) #toast {
 .content-workspace {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  padding-right: 72px;
+  padding-right: 0;
   gap: 12px;
   align-items: start;
 }
@@ -451,7 +451,7 @@ body:has(.journey-form) #toast {
 .form-intro + .advanced-settings {
   margin-top: -10px;
 }
-@media (max-width: 600px) {
+@media (max-width: 1200px) {
   .content-workspace {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -517,4 +517,8 @@ body:has(.journey-form) #toast {
   font-size: 22px;
   line-height: 1;
 }
-.builder-sidebar .btn::before { content: "+"; font-size: 24px; line-height: 1; }
+.builder-sidebar .btn::before {
+  content: '+';
+  font-size: 24px;
+  line-height: 1;
+}
