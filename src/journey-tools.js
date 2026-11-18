@@ -223,7 +223,9 @@ window.SafeSpaceJourneyTools = (() => {
       };
     }
   }
+  let stopFollowing = () => {};
   function bind({ state, draw, dirty, readOnly }) {
+    stopFollowing();
     if (readOnly) return;
     const steps = state.editor.steps;
     const step = steps[state.step];
@@ -247,10 +249,38 @@ window.SafeSpaceJourneyTools = (() => {
       (from, to) => reorder(step.blocks, from, to, '[data-block="' + to + '"] h2'),
     );
     const sidebar = document.querySelector('.builder-sidebar');
+    let frame = 0;
+    function followSidebar() {
+      frame = 0;
+      if (!sidebar?.isConnected) {
+        stopFollowing();
+        return;
+      }
+      sidebar.style.removeProperty('transform');
+      if (getComputedStyle(sidebar).position !== 'absolute') return;
+      const hostTop = sidebar.parentElement.getBoundingClientRect().top;
+      const workspaceBottom = document
+        .querySelector('.content-workspace')
+        .getBoundingClientRect().bottom;
+      const maxOffset = Math.max(0, workspaceBottom - hostTop - sidebar.offsetHeight);
+      const offset = Math.min(Math.max(0, 16 - hostTop), maxOffset);
+      sidebar.style.transform = `translateY(${offset}px)`;
+    }
+    function scheduleFollow() {
+      if (!frame) frame = requestAnimationFrame(followSidebar);
+    }
+    window.addEventListener('scroll', scheduleFollow, { capture: true, passive: true });
+    window.addEventListener('resize', scheduleFollow);
+    stopFollowing = () => {
+      window.removeEventListener('scroll', scheduleFollow, true);
+      window.removeEventListener('resize', scheduleFollow);
+      cancelAnimationFrame(frame);
+    };
     function activate(card) {
       const host = card || document.querySelector('#journey-content');
       if (sidebar && sidebar.parentElement !== host) host.append(sidebar);
       cards.forEach((item) => item.classList.toggle('editing-card', item === card));
+      scheduleFollow();
     }
     cards.forEach((card, index) => {
       const block = step.blocks[index];
