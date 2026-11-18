@@ -75,24 +75,6 @@ window.SafeSpaceJourneyEditor = function (ctx) {
           <p class="field-hint">สถานะจำลองสำหรับรีวิวเนื้อหา · ยังไม่มีการเผยแพร่เข้าเกม</p>
         </section>
 
-        <section class="step-selector card" aria-label="ขั้นตอนของกิจกรรม">
-          <div class="row between">
-            <div>
-              <span class="form-eyebrow">ลำดับการเล่น</span>
-              <h2>ขั้นตอน ${state.step + 1} จาก ${j.steps.length}</h2>
-            </div>
-            ${!readOnly ? B('เพิ่มขั้นตอน', 'add-step', { icon: 'plus', kind: 'small', disabled: j.steps.length >= 30 }) : ''}
-          </div>
-          <div class="step-pills">
-            ${j.steps.map((s, i) => /* HTML */ `<button type="button" data-action="select-step" data-index="${i}" aria-pressed="${i === state.step}"><span>${i + 1}</span>${E(s.name || 'ขั้นตอนใหม่')}</button>`).join('')}
-          </div>
-          <p class="field-hint">
-            ${readOnly ? 'เลือกขั้นตอนเพื่อดูเนื้อหา' : 'คลิกเพื่อแก้ไข หรือลากขั้นตอนไปวางบนขั้นตอนอื่นเพื่อเปลี่ยนลำดับการเล่น'}
-          </p>
-        </section>
-
-        ${step ? content.render(step, readOnly) : ''}
-
         <details class="card advanced-settings">
           <summary>การตั้งค่าเพิ่มเติม <span>ข้อความของระบบ · ผลรวม · Export</span></summary>
           <div class="advanced-body">
@@ -114,6 +96,27 @@ window.SafeSpaceJourneyEditor = function (ctx) {
             </p>
           </div>
         </details>
+        <section class="step-selector card" aria-label="ขั้นตอนของกิจกรรม">
+          <div class="row between">
+            <div>
+              <span class="form-eyebrow">ลำดับการเล่น</span>
+              <h2>ขั้นตอน ${state.step + 1} จาก ${j.steps.length}</h2>
+            </div>
+            ${!readOnly ? B('เพิ่มขั้นตอน', 'add-step', { icon: 'plus', kind: 'small', disabled: j.steps.length >= 30 }) : ''}
+          </div>
+          <div class="step-pills">
+            ${j.steps.map((s, i) => /* HTML */ `<button type="button" data-action="select-step" data-index="${i}" aria-pressed="${i === state.step}"><span>${i + 1}</span>${E(s.name || 'ขั้นตอนใหม่')}</button>`).join('')}
+          </div>
+          <p class="field-hint">
+            ${readOnly ? 'เลือกขั้นตอนเพื่อดูเนื้อหา' : 'คลิกเพื่อแก้ไข หรือลากขั้นตอนไปวางบนขั้นตอนอื่นเพื่อเปลี่ยนลำดับการเล่น'}
+          </p>
+        </section>
+
+        <div class="content-workspace">
+          <div>${step ? content.render(step, readOnly) : ''}</div>
+          ${!readOnly ? `<aside class="builder-sidebar" aria-label="เพิ่มเนื้อหา">${B('＋ Dialog', 'add-dialog', { disabled: step.blocks.length >= 30 })}${B('＋ Quiz', 'add-quiz', { disabled: step.blocks.length >= 30 })}</aside>` : ''}
+        </div>
+
         <div class="editor-save-bar">
           <div>
             <strong id="editor-save-state" role="status"
@@ -128,6 +131,29 @@ window.SafeSpaceJourneyEditor = function (ctx) {
 
   function bind() {
     if (!state.editor) return;
+    document
+      .querySelectorAll(
+        '[data-edit=title], [data-edit=description], [data-step-edit=name], [data-step-edit=npc], [data-block-edit=title], [data-question-edit=title], [data-choice], .rich-dialog',
+      )
+      .forEach((el) => {
+        el.setAttribute('aria-required', 'true');
+        if ('required' in el) el.required = true;
+        const label = el.closest('.field') || el.closest('.choice-row')?.querySelector('label');
+        if (label && !label.querySelector('.required-mark')) {
+          const mark = document.createElement('span');
+          mark.className = 'required-mark';
+          mark.textContent = ' *';
+          mark.setAttribute('aria-hidden', 'true');
+          const caption = document.createElement('span');
+          caption.className = 'required-caption';
+          const text = Array.from(label.childNodes).find(
+            (node) => node.nodeType === Node.TEXT_NODE,
+          );
+          if (text) caption.append(text);
+          caption.append(mark);
+          label.prepend(caption);
+        }
+      });
     SafeSpaceJourneyTools.bind({ state, dirty, draw, readOnly: !writable('journeys') });
     if (!writable('journeys')) return;
     const j = state.editor;

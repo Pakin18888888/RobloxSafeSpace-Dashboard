@@ -161,24 +161,37 @@ window.SafeSpaceJourneyTools = (() => {
     for (const item of items) {
       const handle = handleFor(item);
       handle.draggable = true;
+      handle.onkeydown = (e) => {
+        if (!['ArrowUp', 'ArrowDown'].includes(e.key)) return;
+        e.preventDefault();
+        const from = items.indexOf(item);
+        const to = from + (e.key === 'ArrowUp' ? -1 : 1);
+        if (to >= 0 && to < items.length) place(from, to);
+      };
       handle.ondragstart = (e) => {
+        e.stopPropagation();
         source = item;
+        item.classList.add('sort-dragging');
         e.dataTransfer.effectAllowed = 'move';
         e.dataTransfer.setData('text/plain', 'journey-order');
       };
       item.ondragover = (e) => {
         if (!source) return;
         e.preventDefault();
+        e.stopPropagation();
         mark(item);
       };
       item.ondrop = (e) => {
         if (!source) return;
         e.preventDefault();
+        e.stopPropagation();
+        source.classList.remove('sort-dragging');
         mark(null);
         if (source !== item) place(items.indexOf(source), items.indexOf(item));
         source = null;
       };
       handle.ondragend = () => {
+        item.classList.remove('sort-dragging');
         source = null;
         mark(null);
       };
@@ -190,6 +203,7 @@ window.SafeSpaceJourneyTools = (() => {
       };
       handle.onpointermove = (e) => {
         if (!start || Math.hypot(e.clientX - start[0], e.clientY - start[1]) < 6) return;
+        item.classList.add('sort-dragging');
         const node = document.elementFromPoint(e.clientX, e.clientY);
         mark(items.find((other) => other.contains(node)));
         if (e.clientY < 65 || e.clientY > innerHeight - 65)
@@ -197,11 +211,13 @@ window.SafeSpaceJourneyTools = (() => {
       };
       handle.onpointerup = () => {
         const to = target;
+        item.classList.remove('sort-dragging');
         start = null;
         mark(null);
         if (to && to !== item) place(items.indexOf(item), items.indexOf(to));
       };
       handle.onpointercancel = () => {
+        item.classList.remove('sort-dragging');
         start = null;
         mark(null);
       };
@@ -234,6 +250,21 @@ window.SafeSpaceJourneyTools = (() => {
       cards.forEach((item) => item.classList.toggle('editing-card', item === card));
     }
     cards.forEach((card, index) => {
+      const block = step.blocks[index];
+      const kind = block.type === 'dialog' ? 'line' : 'question';
+      const items = Array.from(card.querySelectorAll('[data-' + kind + ']'));
+      sortable(
+        items,
+        (item) => item.querySelector('.nested-grip'),
+        (from, to) => {
+          reorder(
+            kind === 'line' ? block.lines : block.questions,
+            from,
+            to,
+            '[data-block="' + index + '"] [data-' + kind + '="' + to + '"] .nested-grip',
+          );
+        },
+      );
       card.addEventListener('focusin', () => activate(card));
       card.addEventListener('pointerdown', () => activate(card));
       card

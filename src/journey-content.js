@@ -11,7 +11,9 @@ window.SafeSpaceJourneyContent = function ({ state, writable, draw, dirty }) {
   };
   function controls(kind, index, length, readOnly, minimum = 1) {
     if (readOnly) return '';
-    return `<div class="row content-controls">${B('ขึ้น', `move-${kind}`, { kind: 'small', extra: 'data-direction="-1"', disabled: index === 0 })}${B('ลง', `move-${kind}`, { kind: 'small', extra: 'data-direction="1"', disabled: index === length - 1 })}${B('ลบ', `remove-${kind}`, { kind: 'danger small', disabled: length <= minimum })}</div>`;
+    if (kind === 'block')
+      return `<div class="row content-controls">${B('ทำสำเนา', 'duplicate-block', { kind: 'small', disabled: length >= 30 })}${B('ลบ', 'remove-block', { kind: 'danger small' })}</div>`;
+    return `<div class="row content-controls"><button type="button" class="btn small nested-grip" aria-label="ลากจัดลำดับ หรือใช้ปุ่มลูกศรขึ้นลง">⠿</button>${B('ทำสำเนา', `duplicate-${kind}`, { kind: 'small', disabled: length >= (kind === 'line' ? 50 : 30) })}${B('ลบ', `remove-${kind}`, { kind: 'danger small', disabled: length <= minimum })}</div>`;
   }
   function questionView(q, qi, block, bi, off, readOnly) {
     return /* HTML */ `<section class="question-card" data-question="${qi}">
@@ -45,7 +47,7 @@ window.SafeSpaceJourneyContent = function ({ state, writable, draw, dirty }) {
         </div>
         ${controls('block', bi, step.blocks.length, readOnly, 0)}
       </div>
-      ${!readOnly ? SafeSpaceJourneyTools.cardTools(step.blocks.length) : ''}
+      ${!readOnly ? '<span class="card-grip" title="ลากเพื่อจัดลำดับการ์ด" aria-hidden="true">⠿</span>' : ''}
       ${field('ชื่อการ์ด', 'blockTitle', block.title, 'text', `data-block-edit="title" maxlength="120" ${off}`)}
       ${
         block.type === 'dialog'
@@ -80,24 +82,27 @@ window.SafeSpaceJourneyContent = function ({ state, writable, draw, dirty }) {
       .reduce((n, b) => n + b.questions.length, 0);
     return /* HTML */ `<section class="card form-card" id="journey-content">
         <div class="form-card-heading">
-          <span class="form-eyebrow">STEP ${state.step + 1}</span>
+          <div class="row between">
+            <span class="form-eyebrow">STEP ${state.step + 1}</span
+            >${!readOnly ? B('ลบขั้นตอน', 'remove-step', { kind: 'danger small', disabled: state.editor.steps.length === 1 }) : ''}
+          </div>
           <h2 tabindex="-1">จัดเนื้อหาภายในขั้นตอน</h2>
           <p>ผู้เล่นจะพบการ์ดตามลำดับจากบนลงล่าง เพิ่ม Dialog และ Quiz สลับกันได้</p>
         </div>
         <div class="form-grid">
           ${field('ชื่อขั้นตอน', 'stepName', step.name, 'text', `data-step-edit="name" maxlength="120" ${off}`)}${field('รหัสตัวละคร (NPC ID)', 'npc', step.npc, 'text', `data-step-edit="npc" maxlength="60" ${off}`)}
         </div>
-        ${!readOnly ? `<div class="step-footer"><span class="small muted">จัดลำดับขั้นตอน</span><div class="row">${B('เลื่อนขึ้น', 'move-step', { kind: 'small', extra: 'data-direction="-1"', disabled: state.step === 0 })}${B('เลื่อนลง', 'move-step', { kind: 'small', extra: 'data-direction="1"', disabled: state.step === state.editor.steps.length - 1 })}${B('ลบขั้นตอน', 'remove-step', { kind: 'danger small', disabled: state.editor.steps.length === 1 })}</div></div>` : ''}
       </section>
       ${step.blocks.map((b, i) => blockView(b, i, step, readOnly)).join('') || '<div class="quiz-empty">ยังไม่มีการ์ด เพิ่ม Dialog หรือ Quiz เพื่อเริ่มต้น</div>'}
-      <section class="card form-card content-add-bar">
-        ${!readOnly ? `<div class="row">${B('เพิ่มบทสนทนา', 'add-dialog', { icon: 'plus', disabled: step.blocks.length >= 30 })}${B('เพิ่มแบบทดสอบ', 'add-quiz', { icon: 'plus', disabled: step.blocks.length >= 30 })}</div>` : ''}
+      <details class="card form-card">
+        <summary>เกณฑ์ผ่านของขั้นตอน</summary>
+
         ${field('เกณฑ์ผ่าน: จำนวนคำตอบถูกที่ต้องได้ (ไม่บังคับ)', 'passMark', step.passMark ?? '', 'number', `data-step-edit="passMark" min="1" max="${graded}" step="1" placeholder="เว้นว่าง = ทำกิจกรรมครบ" ${off}`)}
         <p class="field-hint">
           มี ${graded} คำถามแบบ Graded ในขั้นนี้ · เกณฑ์ผ่านและการแสดงเฉลยเป็นการตั้งค่าจำลอง
           ยังไม่บังคับใช้ในเกมจริง
         </p>
-      </section>`;
+      </details>`;
   }
   function locate(element) {
     const step = current();
@@ -162,7 +167,7 @@ window.SafeSpaceJourneyContent = function ({ state, writable, draw, dirty }) {
   }
   function action(name, button) {
     if (
-      !/^(insert-(dialog|quiz)|duplicate-block|add-(dialog|quiz|line|question|choice)|remove-(block|line|question|choice)|move-(block|line|question))$/.test(
+      !/^(insert-(dialog|quiz)|duplicate-(block|line|question)|add-(dialog|quiz|line|question|choice)|remove-(block|line|question|choice)|move-(block|line|question))$/.test(
         name,
       )
     )
@@ -226,6 +231,12 @@ window.SafeSpaceJourneyContent = function ({ state, writable, draw, dirty }) {
             ? block.questions
             : null;
     const index = kind === 'block' ? bi : kind === 'line' ? li : qi;
+    if (name.startsWith('duplicate-') && list) {
+      if (list.length >= (kind === 'line' ? 50 : 30)) return true;
+      list.splice(index + 1, 0, structuredClone(list[index]));
+      repaint(`[data-block="${bi}"] [data-${kind}="${index + 1}"] h3`);
+      return true;
+    }
     if (name.startsWith('move-') && list) {
       move(list, index, Number(button.dataset.direction));
       const next = Math.max(0, Math.min(list.length - 1, index + Number(button.dataset.direction)));

@@ -32,7 +32,7 @@ const { chromium } = require(process.env.PLAYWRIGHT_MODULE_PATH || 'playwright')
     await act('add-line', block(0)).click();
     await block(0).locator('[data-line="1"] [data-line-edit=text]').fill('บทพูดที่สอง');
     await block(0).locator('[data-line="1"] [data-line-edit=speaker]').fill('ผู้ช่วย');
-    await block(0).locator('[data-line="1"] [data-action=move-line][data-direction="-1"]').click();
+    await block(0).locator('[data-line="1"] .nested-grip').press('ArrowUp');
     assert.equal(
       await block(0).locator('[data-line="0"] [data-line-edit=text]').innerText(),
       'บทพูดที่สอง',
@@ -44,7 +44,7 @@ const { chromium } = require(process.env.PLAYWRIGHT_MODULE_PATH || 'playwright')
     await question(1, 1).locator('[data-choice="0"]').fill('คำตอบ ก');
     await question(1, 1).locator('[data-choice="1"]').fill('คำตอบ ข');
     await question(1, 1).locator('[data-choice-answer="1"]').check();
-    await question(1, 1).locator('[data-action=move-question][data-direction="-1"]').click();
+    await question(1, 1).locator('.nested-grip').press('ArrowUp');
     assert.ok(await question(1, 0).locator('[data-choice-answer="1"]').isChecked());
     await act('add-dialog').click();
     await block(2).locator('[data-block-edit=title]').fill('บทสรุป');
@@ -58,7 +58,13 @@ const { chromium } = require(process.env.PLAYWRIGHT_MODULE_PATH || 'playwright')
     await question(3, 0).locator('[data-choice="0"]').fill('ใช่');
     await question(3, 0).locator('[data-choice="1"]').fill('ไม่ใช่');
     await question(3, 0).locator('[data-choice-answer="0"]').check();
-    await block(3).locator('[data-action=move-block][data-direction="-1"]').click();
+    await p.setViewportSize({ width: 1440, height: 6000 });
+    await block(3).locator('.card-grip').dragTo(block(2).locator('h2'));
+    await p.setViewportSize({ width: 1440, height: 1000 });
+    await p
+      .locator('details')
+      .filter({ has: p.locator('[data-step-edit=passMark]') })
+      .evaluate((el) => (el.open = true));
     await p.locator('[data-step-edit=passMark]').fill('2');
     await save();
     await act('exit-editor').click();
@@ -77,11 +83,19 @@ const { chromium } = require(process.env.PLAYWRIGHT_MODULE_PATH || 'playwright')
     assert.ok(await block(2).locator('[data-block-edit=showCorrect]').isChecked());
     assert.equal(await p.locator('[data-step-edit=passMark]').inputValue(), '2');
     // Reject an impossible pass mark without losing the editor's draft.
+    await p
+      .locator('details')
+      .filter({ has: p.locator('[data-step-edit=passMark]') })
+      .evaluate((el) => (el.open = true));
     await p.locator('[data-step-edit=passMark]').fill('4');
     await act('save-journey').click();
     await p.locator('#modal-form [type=submit]').click();
     await p.locator('#modal-error').waitFor({ state: 'visible' });
     await p.keyboard.press('Escape');
+    await p
+      .locator('details')
+      .filter({ has: p.locator('[data-step-edit=passMark]') })
+      .evaluate((el) => (el.open = true));
     await p.locator('[data-step-edit=passMark]').fill('2');
     await act('remove-line', block(0).locator('[data-line="0"]')).click();
     await p.keyboard.press('Escape');
@@ -114,7 +128,7 @@ const { chromium } = require(process.env.PLAYWRIGHT_MODULE_PATH || 'playwright')
     await p.locator('[data-step-edit=name]').fill('ขั้นเพิ่มเติม');
     await p.locator('[data-step-edit=npc]').fill('extra_npc');
     await p.locator('[data-line-edit=text]').fill('บทพูดของขั้นเพิ่มเติม');
-    await p.locator('[data-action=move-step][data-direction="-1"]').click();
+    await p.locator('.step-pills button').last().dragTo(p.locator('.step-pills button').nth(2));
     assert.equal(await p.locator('[data-step-edit=name]').inputValue(), 'ขั้นเพิ่มเติม');
     await save();
     await act('exit-editor').click();
@@ -131,11 +145,15 @@ const { chromium } = require(process.env.PLAYWRIGHT_MODULE_PATH || 'playwright')
     await block(0).locator('[data-format=bold]').first().click();
     assert.equal(await speech.locator('b, strong').innerText(), 'ทดสอบรูปแบบ');
     await act('duplicate-block', block(0)).click();
-    assert.equal(await block(1).locator('.rich-dialog b, .rich-dialog strong').innerText(), 'ทดสอบรูปแบบ');
+    assert.equal(
+      await block(1).locator('.rich-dialog b, .rich-dialog strong').innerText(),
+      'ทดสอบรูปแบบ',
+    );
     await block(1).locator('[data-block-edit=title]').fill('สำเนาบทสนทนา');
     await block(1).locator('.card-grip').dragTo(block(0).locator('h2'));
     assert.equal(await block(0).locator('[data-block-edit=title]').inputValue(), 'สำเนาบทสนทนา');
-    await act('insert-quiz', block(0)).click();
+    await act('add-quiz').click();
+    await block(2).locator('.card-grip').dragTo(block(1).locator('h2'));
     assert.equal(await block(1).getAttribute('data-kind'), 'quiz');
     await act('duplicate-block', block(1)).click();
     assert.equal(await block(2).getAttribute('data-kind'), 'quiz');
@@ -146,7 +164,10 @@ const { chromium } = require(process.env.PLAYWRIGHT_MODULE_PATH || 'playwright')
     await save();
     await act('exit-editor').click();
     await p.locator('[data-action=edit-journey][data-id=j1]').click();
-    assert.equal(await block(0).locator('.rich-dialog b, .rich-dialog strong').innerText(), 'ทดสอบรูปแบบ');
+    assert.equal(
+      await block(0).locator('.rich-dialog b, .rich-dialog strong').innerText(),
+      'ทดสอบรูปแบบ',
+    );
     assert.deepEqual(errors, []);
     const result = {
       passed: true,
